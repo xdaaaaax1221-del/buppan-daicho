@@ -256,7 +256,7 @@ setTimeout(function () {
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { initializeAuth, inMemoryPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 window.__ready = true;
@@ -270,7 +270,7 @@ const firebaseConfig = {
   appId: "1:1082654722502:web:a532dd60fb993a11ec8ac7"
 };
 const fapp = initializeApp(firebaseConfig);
-const auth = getAuth(fapp);
+const auth = initializeAuth(fapp, { persistence: inMemoryPersistence });
 const db = getFirestore(fapp);
 
 const MAXU = 5;
