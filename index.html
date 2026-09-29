@@ -1084,10 +1084,10 @@ function nextLotSeq() {
 const lotLabel = (seq) => "ロットNo." + seq;
 const lotPrefix = (l) => (l && typeof l.seq === "number" ? "L" + l.seq : (l && l.no) || "");
 async function safe(p) {
-  let failed = false;
-  p.catch(() => { failed = true; });
-  await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
-  return !failed;
+  let failed = false, done = false;
+  p.then(() => { done = true; }).catch(() => { failed = true; done = true; });
+  await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 20000))]);
+  return done ? !failed : false;
 }
 
 function itemRow(i) {
@@ -1869,13 +1869,21 @@ function similarity(a, b) {
 /* PARSE-END */
 
 /* ---------- photos + trade-screenshot import ---------- */
-function fileToImage(file) {
+async function fileToImage(file) {
+  // 大きな写真（カメラの元画像など）を、フルサイズのまま丸ごとメモリに展開しないよう、
+  // 対応しているブラウザでは、読み込みと同時に縮小する（メモリ不足によるページ強制終了を防ぐ）
+  if (window.createImageBitmap) {
+    try {
+      const bmp = await createImageBitmap(file, { resizeWidth: 1800, resizeQuality: "medium" });
+      return { img: bmp };
+    } catch (e) {}
+  }
   return new Promise((res, rej) => {
     const fr = new FileReader();
     fr.onerror = () => rej(new Error("read"));
     fr.onload = () => {
       const img = new Image();
-      img.onload = () => res({ img: img, url: fr.result });
+      img.onload = () => res({ img: img });
       img.onerror = () => rej(new Error("decode"));
       img.src = fr.result;
     };
@@ -1891,13 +1899,21 @@ function scaledCanvas(img, maxSide) {
 }
 async function compressPhoto(file) {
   const r = await fileToImage(file);
-  return { full: scaledCanvas(r.img, 480).toDataURL("image/jpeg", 0.65), thumb: scaledCanvas(r.img, 80).toDataURL("image/jpeg", 0.55) };
+  // データベース側の上限（1枚90万文字未満）に確実に収まるよう、大きければ段階的に縮小する
+  const sizes = [360, 280, 200, 140], quals = [0.55, 0.5, 0.45, 0.4];
+  let full = "";
+  for (let i = 0; i < sizes.length; i++) {
+    full = scaledCanvas(r.img, sizes[i]).toDataURL("image/jpeg", quals[i]);
+    if (full.length < 400000) break;
+  }
+  return { full: full, thumb: scaledCanvas(r.img, 80).toDataURL("image/jpeg", 0.5) };
 }
 function ocrCanvas(img) {
   const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
-  const k = w0 < 1400 ? 2 : 1;
+  // iPhoneのスクリーンショットなど、すでに文字がくっきりしている画像を無駄に2倍拡大しない（速度優先）
+  const k = w0 < 900 ? 2 : 1;
   const c = document.createElement("canvas");
-  c.width = Math.round(Math.min(w0 * k, 2600)); c.height = Math.round(h0 * (c.width / w0));
+  c.width = Math.round(Math.min(w0 * k, 1800)); c.height = Math.round(h0 * (c.width / w0));
   const g = c.getContext("2d", { willReadFrequently: true });
   g.drawImage(img, 0, 0, c.width, c.height);
   const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
@@ -2033,19 +2049,39 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
   state.ocrHtml = '<div class="ocrmsg ' + ((got.length || ci.merged.length) ? "ok" : "err") + '">' + msg + '</div>';
   keepAndRender(over);
 }
+let ocrBusy = false, ocrToken = 0;
 async function handleTradeImage(file) {
   if (!file) return;
-  setOcrMsg("画像を読み取っています…（初回は、文字データの読み込みで、少し時間がかかります）", "busy");
+  const myToken = ++ocrToken;
+  const stillHere = () => myToken === ocrToken && state.view === "add" && state.type === "sales";
+  ocrBusy = true;
+  setOcrMsg("画像を読み取っています…（大きい画像や初回は、少し時間がかかります）", "busy");
   try {
-    const r = await fileToImage(file);
-    const text = await runOcr(ocrCanvas(r.img), (st, p) => setOcrMsg("画像を読み取っています… " + Math.round(p * 100) + "%", "busy"));
-    setOcrMsg("写真を見比べています…", "busy");
-    const thumbC = cropTradeThumb(r.img);
-    const cands = await matchByPhoto(thumbC, parseTrade(text).title);
-    applyTrade(parseTrade(text), text, cands, thumbC.toDataURL("image/jpeg", 0.7));
-  } catch (e) {
-    setOcrMsg("読み取れませんでした。通信を確認するか、手で入力してください。", "err");
-  }
+    let r;
+    try { r = await fileToImage(file); } catch (e) { if (stillHere()) setOcrMsg("画像を開けませんでした。もう一度選び直してください。", "err"); return; }
+    let text = null;
+    for (let attempt = 0; attempt < 2 && text === null; attempt++) {
+      try {
+        text = await runOcr(ocrCanvas(r.img), (st, p) => { if (stillHere()) setOcrMsg("画像を読み取っています…" + (attempt ? "（もう一度）" : "") + " " + Math.round(p * 100) + "%", "busy"); });
+      } catch (e) {
+        if (attempt === 0) { if (stillHere()) setOcrMsg("読み取り直しています…", "busy"); await new Promise((res) => setTimeout(res, 1200)); }
+      }
+    }
+    if (!stillHere()) return;
+    if (text === null) {
+      setOcrMsg("読み取れませんでした。電波が弱いと、読み取り機能のデータ（数MB）が届かないことがあります。電波の良い場所でもう一度試すか、手で入力してください。", "err");
+      return;
+    }
+    try {
+      setOcrMsg("写真を見比べています…", "busy");
+      const thumbC = cropTradeThumb(r.img);
+      const cands = await matchByPhoto(thumbC, parseTrade(text).title);
+      if (!stillHere()) return;
+      applyTrade(parseTrade(text), text, cands, thumbC.toDataURL("image/jpeg", 0.7));
+    } catch (e) {
+      if (stillHere()) setOcrMsg("読み取れませんでした。通信を確認するか、手で入力してください。", "err");
+    }
+  } finally { if (myToken === ocrToken) ocrBusy = false; }
 }
 document.addEventListener("paste", (e) => {
   if (state.view !== "add" || state.type !== "sales" || state.editId) return;
@@ -2059,7 +2095,10 @@ document.addEventListener("paste", (e) => {
 /* ---------- events ---------- */
 $("dock").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b || !me) return;
-  if (b.dataset.view === "add") { state.editId = null; state.type = "sales"; state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = ""; }
+  if (b.dataset.view === "add") {
+    if (ocrBusy && state.view === "add" && state.type === "sales") { toast("画像を読み取っています。もう少しお待ちください。"); return; }
+    state.editId = null; state.type = "sales"; state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = "";
+  }
   go(b.dataset.view);
 });
 
