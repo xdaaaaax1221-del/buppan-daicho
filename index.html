@@ -164,13 +164,13 @@ input[type="date"].field { appearance: none; -webkit-appearance: none; text-alig
 nav.dock {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  display: flex; gap: 6px; padding: 8px; border-radius: 30px; background: var(--nav);
+  display: flex; gap: 3px; padding: 7px; border-radius: 30px; background: var(--nav);
   border: 1px solid var(--line); box-shadow: var(--shadow);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 10;
 }
 nav.dock button {
-  width: 84px; height: 56px; border: 0; border-radius: 22px; background: #ffffff; color: #0d2b36;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit; font-size: 11px; cursor: pointer;
+  width: 62px; height: 56px; border: 0; border-radius: 22px; background: #ffffff; color: #0d2b36;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit; font-size: 10px; cursor: pointer;
 }
 nav.dock button svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 nav.dock button[aria-current="page"] { background: var(--sales); color: var(--sales-ink); font-weight: 700; }
@@ -230,6 +230,83 @@ table.t .r.s { color: var(--sales); } table.t .r.e { color: var(--expense); }
   .app, nav.dock, .toast, .scrim { display: none !important; }
   #printarea { display: block !important; }
 }
+.note { color: var(--muted); font-size: 13px; margin: 0 4px 12px; }
+.seg.c3 { grid-template-columns: repeat(3, 1fr); }
+.seg.c3 button { height: 46px; font-size: 15px; }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.gbtn { height: 50px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.ghost.n { color: var(--text); }
+.sheet .ghost.danger { color: var(--danger); }
+.nm { font-weight: 600; }
+.no { color: var(--muted); font-size: 11px; letter-spacing: .02em; }
+.tag.stock { background: var(--sales); color: var(--sales-ink); }
+.tag.sold { background: var(--glass-strong); color: var(--muted); border: 1px solid var(--line); }
+.tag.lost { background: var(--danger); color: #fff; }
+.profit { font-size: 12px; color: var(--sales); font-weight: 600; }
+.profit.neg { color: var(--danger); }
+.rowcard { border: 1px solid var(--line); background: var(--glass); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+.rowcard .field { height: 48px; font-size: 16px; margin-bottom: 10px; }
+.rowcard .two { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
+.rowcard .two .field { margin-bottom: 0; }
+.rowcard .rm { background: none; border: 0; color: var(--danger); font: inherit; font-size: 13px; padding: 10px 0 0; cursor: pointer; }
+.chkrow { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; margin-bottom: 8px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font: inherit; cursor: pointer; }
+.chkrow .box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; color: transparent; font-weight: 700; }
+.chkrow.on { border-color: var(--sales); }
+.chkrow.on .box { background: var(--sales); border-color: var(--sales); color: var(--sales-ink); }
+.chkrow .main { flex: 1; min-width: 0; }
+.chkrow .amt { font-weight: 700; white-space: nowrap; }
+.bar { height: 10px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--line); overflow: hidden; margin: 8px 0 14px; }
+.bar > div { height: 100%; background: var(--sales); }
+.kv { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.kv span:first-child { color: var(--muted); }
+.reasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.reasons button { height: 46px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); color: var(--danger); font: inherit; font-weight: 700; cursor: pointer; }
+.miss { display: grid; grid-template-columns: 1fr 110px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.miss .field { height: 46px; font-size: 15px; margin-bottom: 0; padding: 0 10px; }
+.hint { font-size: 13px; margin: 0 4px 12px; min-height: 0; color: var(--muted); }
+.hint.ok { color: var(--sales); font-weight: 600; }
+.hint.ng { color: var(--danger); }
+select.field { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 22px) 24px, calc(100% - 16px) 24px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 36px; }
+.miss select.field { background-position: calc(100% - 20px) 20px, calc(100% - 14px) 20px; }
+.two2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+label.mini { display: block; font-size: 12px; color: var(--muted); }
+label.mini .field { margin-top: 4px; margin-bottom: 0; height: 46px; font-size: 16px; }
+.an-card { padding: 16px; margin-bottom: 14px; }
+.an-title { font-family: var(--serif); font-size: 18px; margin: 0 0 10px; letter-spacing: .04em; }
+.lgd { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 6px; flex-wrap: wrap; }
+.lgd i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+.donut-wrap { display: flex; align-items: center; gap: 10px; }
+.dleg { flex: 1; min-width: 0; font-size: 13px; }
+.dli { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.dsw { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.dli .nm2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dli b { white-space: nowrap; font-size: 12px; }
+.rk { padding: 8px 0; cursor: pointer; }
+.rk-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.rk-top .nm2 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-bar { height: 8px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--line); overflow: hidden; margin-top: 5px; }
+.rk-bar > div { height: 100%; border-radius: 999px; }
+.th { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; }
+.ir { display: flex; align-items: center; gap: 8px; }
+.hint .th { width: 28px; height: 28px; vertical-align: middle; margin-right: 6px; border-radius: 6px; }
+.prow { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.pbtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font-size: 13px; cursor: pointer; }
+.pthumb { width: 52px; height: 52px; object-fit: cover; border-radius: 10px; }
+.phbox { margin: 6px 0 12px; }
+.phbox img { width: 100%; max-height: 260px; object-fit: contain; border-radius: 14px; background: var(--glass); }
+.noph { padding: 14px; text-align: center; color: var(--muted); font-size: 13px; border: 1px dashed var(--line); border-radius: 14px; }
+.cands { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+.cand { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.chkrow .th { margin-left: -4px; }
+.ocrmsg { margin-top: 10px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6; background: var(--glass); border: 1px solid var(--line); }
+.ocrmsg.ok { border-color: var(--sales); }
+.ocrmsg.err { border-color: var(--danger); color: var(--danger); }
+.ocrmsg .ng { color: var(--danger); font-weight: 700; }
+.ocrmsg details { margin-top: 6px; color: var(--muted); }
+.ocrmsg pre { white-space: pre-wrap; word-break: break-all; font-size: 11px; max-height: 160px; overflow: auto; margin: 6px 0 0; }
+.qthumb { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.qthumb img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: none; }
+.qthumb span { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -244,8 +321,14 @@ table.t .r.s { color: var(--sales); } table.t .r.e { color: var(--expense); }
   <button data-view="add" class="plus" aria-label="記録を追加">
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>記録する
   </button>
+  <button data-view="stock" aria-label="在庫">
+    <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>在庫
+  </button>
   <button data-view="history" aria-label="履歴">
     <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>履歴
+  </button>
+  <button data-view="analytics" aria-label="分析">
+    <svg viewBox="0 0 24 24"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>分析
   </button>
 </nav>
 
@@ -293,7 +376,8 @@ const state = { view: "home", month: ym(new Date()), editId: null, type: "sales"
 let me = null;
 let records = [];
 let members = [];
-let unsubR = null, unsubM = null;
+let unsubs = [];
+let lots = [], items = [], counts = [], countState = null, sites = [], suppliers = null;
 let authReady = false;
 let busy = false;
 let loginMode = "login";
@@ -304,9 +388,9 @@ let usersPending = null;
 const inMonth = (m) => records.filter((r) => r.date && r.date.slice(0, 7) === m);
 const sorted = (list) => list.slice().sort((a, b) => (a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : a.date < b.date ? 1 : -1));
 function sums(list) {
-  let s = 0, e = 0;
-  list.forEach((r) => { if (r.type === "sales") s += r.amount; else e += r.amount; });
-  return { s, e, b: s - e };
+  let s = 0, e = 0, f = 0, h = 0;
+  list.forEach((r) => { if (r.type === "sales") { s += r.amount; f += (r.fee || 0); h += (r.shipping || 0); } else e += r.amount; });
+  return { s, e, f, h, b: s - e - f - h };
 }
 
 /* ---------- toast / sheet ---------- */
@@ -341,9 +425,9 @@ function friendly(e) {
 }
 
 function teardown() {
-  if (unsubR) { unsubR(); unsubR = null; }
-  if (unsubM) { unsubM(); unsubM = null; }
-  records = []; members = []; me = null;
+  unsubs.forEach((u) => { try { u(); } catch (e) {} });
+  unsubs = [];
+  records = []; members = []; lots = []; items = []; counts = []; countState = null; sites = []; suppliers = null; me = null;
 }
 
 async function startSession(user, announce) {
@@ -355,17 +439,24 @@ async function startSession(user, announce) {
   }
   const d = snap.data();
   me = { uid: user.uid, name: d.name, slot: String(d.slot) };
-  if (unsubR) unsubR();
-  if (unsubM) unsubM();
-  unsubR = onSnapshot(collection(db, "records"),
+  unsubs.forEach((u) => { try { u(); } catch (e) {} });
+  unsubs = [];
+  const toList = (s) => s.docs.map((x) => Object.assign({ id: x.id }, x.data()));
+  unsubs.push(onSnapshot(collection(db, "lots"), (s) => { lots = toList(s); refresh(); }, () => {}));
+  unsubs.push(onSnapshot(collection(db, "items"), (s) => { items = toList(s); refresh(); }, () => { toast("在庫を読み込めませんでした"); }));
+  unsubs.push(onSnapshot(collection(db, "counts"), (s) => { counts = toList(s); refresh(); }, () => {}));
+  unsubs.push(onSnapshot(doc(db, "state", "suppliers"), (s) => { const d = s.exists() ? s.data() : null; suppliers = d && Array.isArray(d.list) ? d.list : null; refresh(); }, () => {}));
+  unsubs.push(onSnapshot(doc(db, "state", "sites"), (s) => { const d = s.exists() ? s.data() : null; sites = d && Array.isArray(d.list) ? d.list : []; refresh(); }, () => {}));
+  unsubs.push(onSnapshot(doc(db, "state", "count"), (s) => { countState = s.exists() ? s.data() : null; refresh(); }, () => {}));
+  unsubs.push(onSnapshot(collection(db, "records"),
     (s) => { records = s.docs.map((x) => Object.assign({ id: x.id }, x.data())); refresh(); },
-    () => { toast("記録を読み込めませんでした"); });
-  unsubM = onSnapshot(collection(db, "members"),
+    () => { toast("記録を読み込めませんでした"); }));
+  unsubs.push(onSnapshot(collection(db, "members"),
     (s) => {
       members = s.docs.map((x) => Object.assign({ uid: x.id }, x.data())).sort((a, b) => Number(a.slot) - Number(b.slot));
       if (sheetKind === "users") sheetUsers();
     },
-    () => {});
+    () => {}));
   notice = "";
   state.view = "home";
   document.body.classList.remove("locked");
@@ -473,7 +564,7 @@ function tableHtml(list) {
     const d = r.date.split("-");
     return '<tr data-edit="' + esc(r.id) + '"><td>' + parseInt(d[1], 10) + '/' + parseInt(d[2], 10) + (r.by ? '<br><span class="by">' + esc(r.by) + '</span>' : '') + '</td>' +
       '<td><span class="tag ' + c + '">' + (r.type === "sales" ? "売上" : "経費") + '</span></td>' +
-      '<td class="memo-c">' + esc(r.memo || "") + '</td>' +
+      '<td class="memo-c">' + esc(r.memo || "") + (r.type === "sales" && (r.site || r.fee || r.shipping || r.shipMethod) ? '<div class="by">' + esc(r.site || "指定なし") + (r.shipMethod ? '・' + esc(r.shipMethod) : '') + (r.fee ? '・手数料' + yen(r.fee) : '') + (r.shipping ? '・送料' + yen(r.shipping) : '') + '</div>' : '') + '</td>' +
       '<td class="r ' + c + '">' + (r.type === "sales" ? "+" : "−") + yen(r.amount) + '</td></tr>';
   }).join("");
   return '<div class="tbl-wrap"><table class="t"><thead><tr><th>日付</th><th>項目</th><th>メモ</th><th style="text-align:right">金額</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -485,11 +576,16 @@ function renderHome() {
   app.innerHTML =
     '<header class="top"><div><div class="brand">物販台帳</div><div class="sub">' + esc(me.name) + 'さん</div></div>' +
     '<button class="gear" data-act="settings" aria-label="設定"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>' +
-    '<div class="card balance"><div class="k">' + monthLabel(cur) + 'の差引</div><div class="v' + (t.b < 0 ? ' neg' : '') + '">' + (t.b < 0 ? "−" : "") + yen(t.b) + '</div></div>' +
+    '<div class="card balance"><div class="k">' + monthLabel(cur) + 'の純利益（売上−経費−手数料−送料）</div><div class="v' + (t.b < 0 ? ' neg' : '') + '">' + (t.b < 0 ? "−" : "") + yen(t.b) + '</div></div>' +
     '<div class="pair">' +
     '<div class="card"><div class="k"><span class="dot s"></span>売上</div><div class="v">' + yen(t.s) + '</div></div>' +
     '<div class="card"><div class="k"><span class="dot e"></span>経費</div><div class="v">' + yen(t.e) + '</div></div>' +
     '</div>' +
+    '<div class="pair"><div class="card"><div class="k">販売手数料</div><div class="v">' + yen(t.f) + '</div></div>' +
+    '<div class="card"><div class="k">送料</div><div class="v">' + yen(t.h) + '</div></div></div>' +
+    '<div class="pair"><div class="card"><div class="k">在庫</div><div class="v">' + stockItems().length + '点</div></div>' +
+    '<div class="card"><div class="k">在庫の金額</div><div class="v">' + yen(sumOf(stockItems(), costOf)) + '</div></div></div>' +
+    siteSummaryHtml(list) +
     '<div class="sec-title"><span>今月の履歴（' + list.length + '件）</span></div>' +
     tableHtml(sorted(list));
 }
@@ -501,21 +597,47 @@ function renderHistory() {
     monthBar() +
     '<div class="pair"><div class="card"><div class="k"><span class="dot s"></span>売上</div><div class="v">' + yen(t.s) + '</div></div>' +
     '<div class="card"><div class="k"><span class="dot e"></span>経費</div><div class="v">' + yen(t.e) + '</div></div></div>' +
+    '<div class="pair"><div class="card"><div class="k">販売手数料</div><div class="v">' + yen(t.f) + '</div></div>' +
+    '<div class="card"><div class="k">送料</div><div class="v">' + yen(t.h) + '</div></div></div>' +
+    '<div class="card balance" style="padding:14px 16px;margin-bottom:16px"><div class="k">純利益（売上−経費−手数料−送料）</div><div class="v' + (t.b < 0 ? ' neg' : '') + '" style="font-size:28px">' + sy(t.b) + '</div></div>' +
+    siteSummaryHtml(list) +
     tableHtml(list);
 }
 
 function renderAdd() {
   const rec = state.editId ? records.filter((r) => r.id === state.editId)[0] : null;
   const isS = state.type === "sales";
+  const stSel = state.siteSel != null ? state.siteSel : (rec && rec.site ? rec.site : "");
+  const shSel = state.shipSel != null ? state.shipSel : (rec && rec.shipMethod ? rec.shipMethod : "");
+  const pre = state.prefillNo || "";
+  state.prefillNo = "";
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">' + (rec ? "記録を修正" : "新しい記録") + '</h2></header>' +
     '<div class="seg" role="group" aria-label="項目">' +
     '<button class="s" data-type="sales" aria-pressed="' + isS + '">売上</button>' +
     '<button class="e" data-type="expense" aria-pressed="' + !isS + '">経費</button></div>' +
+    (isS && !rec ? '<div class="card" style="margin-bottom:14px;padding:12px 14px"><div class="nm" style="margin-bottom:4px">取引画面の画像から自動入力（任意）</div>' +
+      '<p class="note" style="margin:0 0 10px">メルカリなどの取引画面のスクリーンショットを選ぶと、金額・日付・発送方法などが自動で入ります。選ばないときは、手で入力します。</p>' +
+      '<label class="gbtn" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>画像を選ぶ<input id="f-img" type="file" accept="image/*" hidden></label>' +
+      '<div id="f-ocr">' + (state.ocrHtml || "") + '</div></div>' : '') +
     '<label class="f" for="f-date">日付</label>' +
     '<input class="field" id="f-date" type="date" value="' + (rec ? esc(rec.date) : today()) + '">' +
-    '<label class="f" for="f-amt">金額</label>' +
-    '<div class="money"><span>¥</span><input class="field" id="f-amt" type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="' + (rec ? rec.amount.toLocaleString("ja-JP") : "") + '"></div>' +
+    (isS && !rec ? '<label class="f" for="f-no">商品番号（在庫の商品を売るとき）</label>' +
+      '<input class="field" id="f-no" type="text" autocomplete="off" autocapitalize="none" placeholder="例：W-001（なければ空欄）" value="' + esc(pre) + '" style="margin-bottom:8px">' +
+      '<div class="hint" id="f-nohint"></div><div id="f-cands">' + (state.candsHtml || "") + '</div>' +
+      (state.tradeId ? '<div class="hint" id="f-trade">取引ID：' + esc(state.tradeId) + '（画像から）</div>' : '') : '') +
+    (isS ? '<label class="f" for="f-shipm">発送方法</label><select class="field" id="f-shipm" style="margin-bottom:' + (shSel === "__other" ? "8px" : "16px") + '">' + shipOptions(shSel) + '</select>' +
+      (shSel === "__other" ? '<input class="field" id="f-shipm-o" type="text" maxlength="20" placeholder="発送方法を入力（例：ヤマト宅急便）" style="margin-bottom:16px">' : '') : '') +
+    (isS ? '<label class="f" for="f-site">販売サイト</label><select class="field" id="f-site" style="margin-bottom:' + (stSel === "__other" ? "8px" : "16px") + '">' + siteOptions(stSel) + '</select>' +
+      (stSel === "__other" ? '<input class="field" id="f-site-o" type="text" maxlength="20" placeholder="販売サイトを入力（例：メルカリ）" style="margin-bottom:16px">' : '') : '') +
+    '<label class="f" for="f-amt">' + (isS ? "売値（円）" : "金額") + '</label>' +
+    '<div class="money"><span>¥</span><input class="field" id="f-amt" type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="' + (rec ? rec.amount.toLocaleString("ja-JP") : "") + '" style="margin-bottom:8px"></div>' +
+    (isS ? '<label class="f" for="f-fee">手数料（円）</label>' +
+      '<div class="money"><span>¥</span><input class="field" id="f-fee" type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="' + (rec && rec.fee ? rec.fee.toLocaleString("ja-JP") : "") + '" style="margin-bottom:8px"></div>' +
+      '<label class="f" for="f-ship">送料（円）</label>' +
+      '<div class="money"><span>¥</span><input class="field" id="f-ship" type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="' + (rec && rec.shipping ? rec.shipping.toLocaleString("ja-JP") : "") + '" style="margin-bottom:8px"></div>' +
+      '<div class="note" id="f-feeprev" style="min-height:18px"></div>' : '') +
+    (!isS ? '<label class="f" for="f-cat">経費の種類</label><select class="field" id="f-cat">' + expCatOptions(rec ? (rec.category || "") : "") + '</select>' : '') +
     '<label class="f" for="f-memo">メモ（任意）</label>' +
     '<input class="field" id="f-memo" type="text" maxlength="100" placeholder="例：商品名・お客様名" value="' + (rec ? esc(rec.memo || "") : "") + '">' +
     '<div class="err" id="err"></div>' +
@@ -534,15 +656,24 @@ function render(keepScroll) {
   document.body.classList.remove("locked");
   if (state.view === "home") renderHome();
   else if (state.view === "history") renderHistory();
+  else if (state.view === "stock") renderStock();
+  else if (state.view === "lotadd") renderLotAdd();
+  else if (state.view === "count") renderCount();
+  else if (state.view === "analytics") renderAnalytics();
   else renderAdd();
+  const dockCur = (state.view === "lotadd" || state.view === "count") ? "stock" : state.view;
   document.querySelectorAll("#dock button").forEach((b) => {
-    if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    if (b.dataset.view === dockCur) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   if (!keepScroll) window.scrollTo(0, 0);
 }
 function refresh() {
   if (!me) return;
-  if (state.view === "home" || state.view === "history") render(true);
+  if (state.view === "home" || state.view === "history" || state.view === "stock" || state.view === "count" || state.view === "analytics") {
+    if (state.view === "stock" && document.activeElement && document.activeElement.id === "q") return;
+    if (state.view === "analytics" && document.activeElement && document.activeElement.id === "an-q") return;
+    render(true);
+  }
 }
 function go(v) { if (v !== "add") state.editId = null; state.view = v; render(); }
 
@@ -554,13 +685,58 @@ async function doSave() {
   const err = $("err");
   if (!date) { err.textContent = "日付を選んでください。"; return; }
   if (!amount) { err.textContent = "金額を入力してください。"; return; }
-  const btn = $("save"); btn.disabled = true;
+  const isS = state.type === "sales";
   const wasEdit = !!state.editId;
+  const old = wasEdit ? records.filter((r) => r.id === state.editId)[0] : null;
+  let siteName = "";
+  if (isS) {
+    const sv3 = val("f-site");
+    if (sv3 === "__other") { siteName = val("f-site-o").trim().slice(0, 20); if (!siteName) { err.textContent = "販売サイトを入力してください。"; return; } }
+    else siteName = sv3;
+  }
+  let fee = 0, ship = 0;
+  if (isS) {
+    const fv = numOf(val("f-fee")), sv = numOf(val("f-ship"));
+    fee = isNaN(fv) ? 0 : fv;
+    ship = isNaN(sv) ? 0 : sv;
+    if (fee > amount) { err.textContent = "手数料が、売値より大きくなっています。"; return; }
+  }
+  let shipm = "";
+  if (isS) {
+    const sv2 = val("f-shipm");
+    if (sv2 === "__other") { shipm = val("f-shipm-o").trim().slice(0, 20); if (!shipm) { err.textContent = "発送方法を入力してください。"; return; } }
+    else shipm = sv2;
+  }
+  let category = "";
+  if (!isS) {
+    category = val("f-cat");
+    if (!category) { err.textContent = "経費の種類を選んでください。"; return; }
+  }
+  const tradeId = (!wasEdit && isS) ? (state.tradeId || "") : "";
+  if (tradeId && records.some((r) => r.orderId === tradeId)) { err.textContent = "この取引（" + tradeId + "）は、すでに登録されています。"; return; }
+  let it = null;
+  const itemNo = (!wasEdit && isS) ? val("f-no").trim() : "";
+  if (itemNo) {
+    it = findItemByNo(itemNo);
+    if (!it) { err.textContent = "この商品番号は登録されていません。"; return; }
+    if (it.status === "sold") { err.textContent = "この商品は、すでに販売済みです。"; return; }
+    if (it.status === "lost") { err.textContent = "この商品は、在庫から外れています。在庫の画面で「在庫に戻す」を押してください。"; return; }
+  }
+  const btn = $("save"); btn.disabled = true;
   let p;
-  if (wasEdit) {
-    p = setDoc(doc(db, "records", state.editId), { type: state.type, date: date, amount: amount, memo: memo }, { merge: true });
+  if (it) {
+    const rref = doc(collection(db, "records")), batch = writeBatch(db);
+    batch.update(doc(db, "items", it.id), { status: "sold", price: amount, soldDate: date, recordId: rref.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm });
+    batch.set(rref, { type: "sales", date: date, amount: amount, memo: (memo || (it.name + "（" + it.no + "）")).slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), itemId: it.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm, orderId: tradeId });
+    p = batch.commit();
+  } else if (wasEdit) {
+    const data = { type: state.type, date: date, amount: amount, memo: memo, site: isS ? siteName : "", fee: isS ? fee : 0, shipping: isS ? ship : 0, shipMethod: isS ? shipm : "", category: isS ? "" : category };
+    p = setDoc(doc(db, "records", state.editId), data, { merge: true });
   } else {
-    p = setDoc(doc(collection(db, "records")), { type: state.type, date: date, amount: amount, memo: memo, by: me.name, uid: me.uid, createdAt: Date.now() });
+    const data = { type: state.type, date: date, amount: amount, memo: memo, by: me.name, uid: me.uid, createdAt: Date.now() };
+    if (isS) { data.site = siteName; data.fee = fee; data.shipping = ship; data.shipMethod = shipm; if (tradeId) data.orderId = tradeId; }
+    else data.category = category;
+    p = setDoc(doc(collection(db, "records")), data);
   }
   let done = false, failed = false;
   p.then(() => { done = true; }, () => { failed = true; toast("保存できませんでした"); });
@@ -568,7 +744,9 @@ async function doSave() {
   if (failed) { btn.disabled = false; err.textContent = "保存できませんでした。通信や権限を確認してください。"; return; }
   state.month = date.slice(0, 7);
   state.editId = null;
-  toast(done ? (wasEdit ? "保存しました" : "記録しました") : "通信待ちです。つながると自動で保存されます");
+  state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = "";
+  const extra = isS && (fee || ship) ? "（" + [fee ? "手数料 " + yen(fee) : "", ship ? "送料 " + yen(ship) : ""].filter(Boolean).join("・") + "）" : "";
+  toast(done ? (wasEdit ? "保存しました" : (it ? "記録して、在庫から外しました" : "記録しました") + extra) : "通信待ちです。つながると自動で保存されます");
   go("home");
 }
 
@@ -585,6 +763,8 @@ async function doDelete(btn) {
 const ICON = {
   key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></svg>',
   user: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+  cart: '<svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>',
+  tag: '<svg viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>',
   out: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>'
 };
@@ -592,6 +772,7 @@ const ICON = {
 function sheetMenu() {
   openSheet('<h3>設定</h3><p class="note">ログイン中：' + esc(me.name) + '</p>' +
     '<button class="menu-item" data-s="pw">' + ICON.key + 'パスワード変更</button>' +
+    '<button class="menu-item" data-s="suppliers">' + ICON.cart + '仕入れ先</button>' +
     '<button class="menu-item" data-s="users">' + ICON.user + 'ユーザー一覧</button>' +
     '<button class="menu-item" data-s="backup">' + ICON.save + 'バックアップ</button>' +
     '<button class="menu-item danger" data-s="logout">' + ICON.out + 'ログアウト</button>' +
@@ -642,7 +823,7 @@ function sheetPrint() {
 }
 
 function backupText() {
-  return JSON.stringify({ app: "shimada-kanri", version: 2, savedAt: new Date().toISOString(), records: records }, null, 2);
+  return JSON.stringify({ app: "shimada-kanri", version: 3, savedAt: new Date().toISOString(), records: records, lots: lots, items: items, counts: counts, sites: sites, suppliers: supplierList() }, null, 2);
 }
 function downloadText(filename, text, mime) {
   const blob = new Blob([text], { type: mime });
@@ -659,27 +840,48 @@ async function doRestore() {
   if (!text) { err.textContent = "ファイルを選ぶか、テキストを貼り付けてください。"; return; }
   let d;
   try { d = JSON.parse(text); } catch (e) { err.textContent = "バックアップの内容を読み取れませんでした。"; return; }
-  const list = d && d.app === "shimada-kanri" && Array.isArray(d.records) ? d.records : null;
-  if (!list) { err.textContent = "物販台帳のバックアップではありません。"; return; }
-  const clean = list.filter((r) => r && (r.type === "sales" || r.type === "expense") && /^\d{4}-\d{2}-\d{2}$/.test(r.date) && typeof r.amount === "number" && r.amount > 0)
-    .map((r) => ({
-      id: r.id ? String(r.id) : doc(collection(db, "records")).id,
-      type: r.type, date: r.date, amount: Math.round(r.amount), memo: String(r.memo || "").slice(0, 100),
-      by: r.by ? String(r.by) : "バックアップ", uid: r.uid ? String(r.uid) : me.uid, createdAt: r.createdAt || Date.now()
-    }));
-  if (!clean.length) { err.textContent = "使える記録がありませんでした。"; return; }
+  if (!d || d.app !== "shimada-kanri" || !Array.isArray(d.records)) { err.textContent = "物販台帳のバックアップではありません。"; return; }
+  const ops = [];
+  const isDate = (x) => typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x);
+  const S = (x, n) => String(x == null ? "" : x).slice(0, n);
+  const idOf = (col, x) => (x && x.id ? String(x.id) : doc(collection(db, col)).id);
+  d.records.forEach((r) => {
+    if (r && (r.type === "sales" || r.type === "expense") && isDate(r.date) && typeof r.amount === "number" && r.amount > 0) {
+      const data = { type: r.type, date: r.date, amount: Math.round(r.amount), memo: S(r.memo, 100), by: r.by ? S(r.by, 30) : "バックアップ", uid: r.uid ? S(r.uid, 60) : me.uid, createdAt: r.createdAt || Date.now() };
+      if (r.itemId) data.itemId = S(r.itemId, 60);
+      if (r.lotId) data.lotId = S(r.lotId, 60);
+      if (r.site) data.site = S(r.site, 20);
+      if (typeof r.fee === "number" && r.fee >= 0) data.fee = Math.round(r.fee);
+      if (typeof r.shipping === "number" && r.shipping >= 0) data.shipping = Math.round(r.shipping);
+      if (r.shipMethod) data.shipMethod = S(r.shipMethod, 20);
+      ops.push(["records", idOf("records", r), data]);
+    }
+  });
+  (Array.isArray(d.lots) ? d.lots : []).forEach((l) => {
+    if (l && typeof l.no === "string" && isDate(l.date)) ops.push(["lots", idOf("lots", l), { no: S(l.no, 30), seq: (typeof l.seq === "number" && l.seq > 0 ? Math.round(l.seq) : null), date: l.date, supplier: S(l.supplier, 40), mode: l.mode === "lot" ? "lot" : (l.mode === "item" ? "item" : ""), total: Math.max(0, Math.round(Number(l.total) || 0)), status: l.status === "open" ? "open" : "closed", closedDate: S(l.closedDate, 10), memo: S(l.memo, 60), by: l.by ? S(l.by, 30) : "バックアップ", createdAt: l.createdAt || Date.now(), recordId: S(l.recordId, 60) }]);
+  });
+  (Array.isArray(d.items) ? d.items : []).forEach((i) => {
+    if (i && typeof i.name === "string" && i.name && typeof i.cost === "number" && (i.status === "stock" || i.status === "sold" || i.status === "lost")) {
+      ops.push(["items", idOf("items", i), { lotId: S(i.lotId, 60), no: S(i.no, 40), name: S(i.name, 60), cost: Math.max(0, Math.round(i.cost)), status: i.status, price: Math.max(0, Math.round(i.price || 0)), soldDate: S(i.soldDate, 10), reason: S(i.reason, 20), lostDate: S(i.lostDate, 10), recordId: S(i.recordId, 60), site: S(i.site, 20), fee: Math.max(0, Math.round(i.fee || 0)), shipping: Math.max(0, Math.round(i.shipping || 0)), shipMethod: S(i.shipMethod, 20), thumb: (typeof i.thumb === "string" && i.thumb.indexOf("data:image/") === 0 && i.thumb.length < 20000 ? i.thumb : ""), photoId: S(i.photoId, 40), by: i.by ? S(i.by, 30) : "バックアップ", createdAt: i.createdAt || Date.now() }]);
+    }
+  });
+  (Array.isArray(d.counts) ? d.counts : []).forEach((c) => {
+    if (c && isDate(c.date) && typeof c.total === "number" && typeof c.missing === "number") ops.push(["counts", idOf("counts", c), { date: c.date, total: Math.round(c.total), missing: Math.round(c.missing), by: c.by ? S(c.by, 30) : "バックアップ", createdAt: c.createdAt || Date.now() }]);
+  });
+  const sitesOk = me.slot === "1" && Array.isArray(d.sites) ? d.sites.filter((x) => x && typeof x.name === "string" && x.name).map((x) => ({ id: S(x.id || ("s" + Math.random().toString(36).slice(2, 8)), 30), name: S(x.name, 20), rate: Math.min(100, Math.max(0, Number(x.rate) || 0)), fixed: Math.max(0, Math.round(Number(x.fixed) || 0)) })) : [];
+  if (!ops.length && !sitesOk.length && !(me.slot === "1" && Array.isArray(d.suppliers) && d.suppliers.length)) { err.textContent = "使える記録がありませんでした。"; return; }
+  if (sitesOk.length) ops.push(["state", "sites", { list: sitesOk }]);
+  const supOk = me.slot === "1" && Array.isArray(d.suppliers) ? d.suppliers.filter((x) => x && typeof x.name === "string" && x.name).map((x) => ({ id: S(x.id || ("p" + Math.random().toString(36).slice(2, 8)), 30), name: S(x.name, 20), mode: x.mode === "lot" ? "lot" : "item" })) : [];
+  if (supOk.length) ops.push(["state", "suppliers", { list: supOk }]);
   msg.textContent = "復元しています…";
   try {
-    for (let i = 0; i < clean.length; i += 400) {
+    for (let i = 0; i < ops.length; i += 400) {
       const batch = writeBatch(db);
-      clean.slice(i, i + 400).forEach((r) => {
-        const id = r.id; const data = Object.assign({}, r); delete data.id;
-        batch.set(doc(db, "records", id), data);
-      });
+      ops.slice(i, i + 400).forEach((o) => batch.set(doc(db, o[0], o[1]), o[2]));
       await batch.commit();
     }
   } catch (e) { msg.textContent = ""; err.textContent = "復元できませんでした。通信や権限を確認してください。"; return; }
-  closeSheet(); toast(clean.length + "件を復元しました");
+  closeSheet(); toast(ops.length + "件を復元しました");
 }
 
 scrim.addEventListener("change", (e) => {
@@ -700,29 +902,1177 @@ function printBody(m) {
   const t = sums(list), now = new Date();
   let rows = list.map((r) => {
     const d = r.date.split("-"), dt = new Date(+d[0], +d[1] - 1, +d[2]);
-    return '<tr><td class="c">' + parseInt(d[1], 10) + '/' + parseInt(d[2], 10) + '（' + "日月火水木金土"[dt.getDay()] + '）</td><td class="c">' + (r.type === "sales" ? "売上" : "経費") + '</td><td>' + esc(r.memo || "") + '</td><td class="c">' + esc(r.by || "") + '</td><td class="r">' + (r.type === "sales" ? "" : "−") + yen(r.amount) + '</td></tr>';
+    return '<tr><td class="c">' + parseInt(d[1], 10) + '/' + parseInt(d[2], 10) + '（' + "日月火水木金土"[dt.getDay()] + '）</td><td class="c">' + (r.type === "sales" ? "売上" : "経費") + '</td><td>' + esc(r.memo || "") + '</td><td class="c">' + esc(r.site || "") + '</td><td class="c">' + esc(r.by || "") + '</td><td class="r">' + (r.type === "sales" ? "" : "−") + yen(r.amount) + '</td><td class="r">' + (r.type === "sales" && r.fee ? yen(r.fee) : "") + '</td><td class="r">' + (r.type === "sales" && r.shipping ? yen(r.shipping) : "") + '</td></tr>';
   }).join("");
-  if (!rows) rows = '<tr><td colspan="5" style="text-align:center">記録はありません</td></tr>';
+  if (!rows) rows = '<tr><td colspan="8" style="text-align:center">記録はありません</td></tr>';
+  const ss = siteSummary(list);
+  const sst = ss.length ? '<p style="margin:14px 0 6px;font-weight:700">販売サイト別（手数料・送料の集計）</p><table><thead><tr><th>サイト</th><th class="r">件数</th><th class="r">売上</th><th class="r">手数料</th><th class="r">送料</th><th class="r">純利益</th></tr></thead><tbody>' +
+    ss.map((o) => '<tr><td>' + esc(o.name) + '</td><td class="r">' + o.n + '</td><td class="r">' + yen(o.s) + '</td><td class="r">' + yen(o.f) + '</td><td class="r">' + yen(o.h) + '</td><td class="r">' + sy(o.s - o.f - o.h - o.c) + '</td></tr>').join("") + '</tbody></table>' : '';
   return '<div class="p-h"><b>物販台帳　' + monthLabel(m) + 'の記録</b><span>出力日 ' + now.getFullYear() + '/' + (now.getMonth() + 1) + '/' + now.getDate() + '</span></div>' +
-    '<div class="p-sum"><div><small>売上</small><strong>' + yen(t.s) + '</strong></div><div><small>経費</small><strong>' + yen(t.e) + '</strong></div><div><small>差引</small><strong>' + (t.b < 0 ? "−" : "") + yen(t.b) + '</strong></div></div>' +
-    '<table><thead><tr><th>日付</th><th>項目</th><th>メモ</th><th>記録者</th><th class="r">金額</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    '<div class="p-sum"><div><small>売上</small><strong>' + yen(t.s) + '</strong></div><div><small>手数料</small><strong>' + yen(t.f) + '</strong></div><div><small>送料</small><strong>' + yen(t.h) + '</strong></div><div><small>経費</small><strong>' + yen(t.e) + '</strong></div><div><small>純利益</small><strong>' + sy(t.b) + '</strong></div></div>' +
+    '<table style="font-size:9.5pt"><thead><tr><th>日付</th><th>項目</th><th>メモ</th><th>サイト</th><th>記録者</th><th class="r">金額</th><th class="r">手数料</th><th class="r">送料</th></tr></thead><tbody>' + rows + '</tbody></table>' + sst;
 }
+
+/* ---------- sales sites / fees ---------- */
+const siteById = (id) => sites.filter((x) => x.id === id)[0];
+const siteByName = (n) => sites.filter((x) => x.name === n)[0];
+const normNo = (x) => String(x == null ? "" : x).normalize("NFKC").trim().toLowerCase();
+const findItemByNo = (no) => { const k = normNo(no); if (!k) return undefined; const list = items.filter((i) => normNo(i.no) === k); if (!list.length) return undefined; return list.filter((i) => i.status === "stock")[0] || list[list.length - 1]; };
+function shipMethods() {
+  const cnt = {};
+  records.forEach((r) => { if (r.type === "sales" && r.shipMethod) cnt[r.shipMethod] = (cnt[r.shipMethod] || 0) + 1; });
+  return Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || (a < b ? -1 : 1));
+}
+const shipOptions = (sel) => '<option value="">指定なし</option>' + shipMethods().map((m) => '<option value="' + esc(m) + '"' + (m === sel ? " selected" : "") + '>' + esc(m) + '</option>').join("") + '<option value="__other"' + (sel === "__other" ? " selected" : "") + '>その他（入力する）</option>';
+const EXPENSE_CATS = ["梱包資材費", "家賃", "光熱費", "日用品", "雑費"];
+const expCatOptions = (sel) => '<option value="">選んでください</option>' + EXPENSE_CATS.map((c) => '<option value="' + esc(c) + '"' + (c === sel ? " selected" : "") + '>' + esc(c) + '</option>').join("");
+function keepAndRender(over) {
+  over = over || {};
+  const ids = ["f-date", "f-amt", "f-memo", "f-no", "f-fee", "f-ship", "f-shipm-o", "f-site-o"];
+  const keep = {};
+  ids.forEach((id) => { keep[id] = val(id); });
+  Object.keys(over.vals || {}).forEach((k) => { keep[k] = over.vals[k]; });
+  state.shipSel = over.shipSel != null ? over.shipSel : val("f-shipm");
+  state.siteSel = over.siteSel != null ? over.siteSel : val("f-site");
+  renderAdd();
+  state.shipSel = null;
+  state.siteSel = null;
+  ids.forEach((id) => { const el = $(id); if (el && keep[id] !== "" && keep[id] !== undefined) el.value = keep[id]; });
+  updateSaleHints();
+}
+function siteNames() {
+  const cnt = {};
+  records.forEach((r) => { if (r.type === "sales" && r.site) cnt[r.site] = (cnt[r.site] || 0) + 1; });
+  const used = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || (a < b ? -1 : 1));
+  sites.forEach((x) => { if (x && x.name && used.indexOf(x.name) < 0) used.push(x.name); });
+  return used;
+}
+const siteOptions = (sel) => '<option value="">指定なし</option>' + siteNames().map((n) => '<option value="' + esc(n) + '"' + (n === sel ? " selected" : "") + '>' + esc(n) + '</option>').join("") + '<option value="__other"' + (sel === "__other" ? " selected" : "") + '>その他（入力する）</option>';
+function siteSummary(list) {
+  const m = {};
+  list.forEach((r) => {
+    if (r.type !== "sales") return;
+    const k = r.site || "指定なし";
+    const o = m[k] || (m[k] = { name: k, n: 0, s: 0, f: 0, h: 0, c: 0 });
+    const itc = r.itemId ? itemById(r.itemId) : null;
+    o.n++; o.s += r.amount; o.f += (r.fee || 0); o.h += (r.shipping || 0); o.c += (itc ? costOf(itc) : 0);
+  });
+  return Object.keys(m).map((k) => m[k]).sort((a, b) => b.s - a.s);
+}
+function siteSummaryHtml(list) {
+  const rows = siteSummary(list);
+  if (!rows.length) return "";
+  const tot = rows.reduce((a, o) => ({ s: a.s + o.s, f: a.f + o.f, h: a.h + o.h, c: a.c + o.c }), { s: 0, f: 0, h: 0, c: 0 });
+  return '<div class="sec-title"><span>販売サイト別（手数料・送料・純利益）</span></div><div class="tbl-wrap"><table class="t" style="font-size:13px"><thead><tr><th>サイト</th><th class="r">売上</th><th class="r">手数料</th><th class="r">送料</th><th class="r">純利益</th></tr></thead><tbody>' +
+    rows.map((o) => '<tr style="cursor:default"><td>' + esc(o.name) + '<div class="no">' + o.n + '件</div></td><td class="r">' + yen(o.s) + '</td><td class="r">' + yen(o.f) + '</td><td class="r">' + yen(o.h) + '</td><td class="r">' + sy(o.s - o.f - o.h - o.c) + '</td></tr>').join("") +
+    '<tr style="cursor:default"><td><b>合計</b></td><td class="r">' + yen(tot.s) + '</td><td class="r">' + yen(tot.f) + '</td><td class="r">' + yen(tot.h) + '</td><td class="r">' + sy(tot.s - tot.f - tot.h - tot.c) + '</td></tr></tbody></table></div>' +
+    '<p class="note" style="margin:6px 4px 16px">サイト別の純利益は、売上−手数料−送料−売れた商品の仕入れ値です。</p>';
+}
+function updateSaleHints() {
+  const fp = $("f-feeprev");
+  if (fp) {
+    const price = numOf(val("f-amt")), fee = numOf(val("f-fee")), ship = numOf(val("f-ship"));
+    const f0 = isNaN(fee) ? 0 : fee, h0 = isNaN(ship) ? 0 : ship;
+    const itm = val("f-no").trim() ? findItemByNo(val("f-no")) : null, c0 = itm && itm.status === "stock" ? costOf(itm) : null;
+    if (isNaN(price) || price < 1) fp.textContent = "";
+    else if (f0 > price) fp.textContent = "手数料が、売値より大きくなっています。";
+    else if (c0 !== null) fp.textContent = "純利益（売値−手数料−送料−仕入れ値） " + sy(price - f0 - h0 - c0);
+    else fp.textContent = "純利益（売値−手数料−送料） " + sy(price - f0 - h0);
+  }
+  const hint = $("f-nohint");
+  if (!hint) return;
+  hint.innerHTML = "";
+  const v = val("f-no").trim();
+  if (!v) { hint.textContent = ""; hint.className = "hint"; return; }
+  const it = findItemByNo(v);
+  if (!it) { hint.textContent = "この商品番号は登録されていません。"; hint.className = "hint ng"; }
+  else if (it.status === "stock") { hint.innerHTML = thumbImg(it) + "✓ " + esc(it.name) + "（仕入れ値 " + yen(costOf(it)) + (isProvisional(it) ? "・見込み" : "") + "）"; hint.className = "hint ok"; return; }
+  else if (it.status === "sold") { hint.textContent = "この商品は、すでに販売済みです。"; hint.className = "hint ng"; }
+  else { hint.textContent = "この商品は、在庫から外れています。"; hint.className = "hint ng"; }
+}
+app.addEventListener("input", (e) => {
+  if (e.target.id === "f-fee" || e.target.id === "f-ship") e.target.value = fmtNum(e.target.value);
+  if (e.target.id === "f-amt" || e.target.id === "f-no" || e.target.id === "f-fee" || e.target.id === "f-ship") setTimeout(updateSaleHints, 0);
+});
+
+let supDraft = null;
+function sheetSuppliers(msg) {
+  const admin = me && me.slot === "1";
+  if (!supDraft) supDraft = supplierList().map((x) => ({ id: x.id, name: x.name, mode: x.mode }));
+  let body;
+  if (admin) {
+    body = supDraft.map((d, i) =>
+      '<div class="rowcard"><input class="field" data-sp="name" data-i="' + i + '" type="text" maxlength="20" placeholder="仕入れ先の名前（例：たつ）" value="' + esc(d.name) + '">' +
+      '<select class="field" data-sp="mode" data-i="' + i + '" style="margin-bottom:0"><option value="lot"' + (d.mode === "lot" ? " selected" : "") + '>ロット計算（まとめて払った金額を、点数で割る）</option><option value="item"' + (d.mode === "item" ? " selected" : "") + '>仕入れ値計算（1点ずつ仕入れ値を入れる）</option></select>' +
+      '<button class="rm" data-s="sup-rm" data-i="' + i + '">この仕入れ先を消す</button></div>').join("") +
+      (supDraft.length ? '' : '<p class="note">まだ仕入れ先がありません。「その他」で、名前を入れて登録することもできます。</p>') +
+      '<button class="ghost" data-s="sup-add">＋ 仕入れ先を追加</button>' +
+      '<div class="err" id="sp-err" style="margin-top:10px"></div>' +
+      '<button class="primary" data-s="sup-save" style="margin-top:6px">保存する</button>';
+  } else {
+    body = (supplierList().length ? supplierList().map((x) => '<div class="kv"><span>' + esc(x.name) + '</span><span>' + modeName(x.mode) + '</span></div>').join("") : '<p class="note">まだ仕入れ先が登録されていません。</p>') +
+      '<p class="note" style="margin-top:12px">登録・変更できるのは管理者だけです。</p>';
+  }
+  openSheet('<h3>仕入れ先</h3><p class="note">仕入れ先を選ぶと、計算のしかたが自動で決まります。ロット計算は、まとめて払った金額を点数で割って、1点ごとの仕入れ値にします。名前が載っていない仕入れ先は、「その他」を選んで、仕入れ値計算で登録します。</p>' +
+    (msg ? '<div class="ok">' + esc(msg) + '</div>' : '') + body + '<button class="ghost" data-s="menu">戻る</button>', "suppliers");
+}
+let siteDraft = null;
+function sheetSites(msg) {
+  const admin = me && me.slot === "1";
+  if (!siteDraft) siteDraft = sites.map((x) => ({ id: x.id, name: x.name, rate: String(x.rate || 0), fixed: String(x.fixed || 0) }));
+  let body;
+  if (admin) {
+    body = siteDraft.map((d, i) =>
+      '<div class="rowcard"><input class="field" data-sd="name" data-i="' + i + '" type="text" maxlength="20" placeholder="サイト名（例：メルカリ）" value="' + esc(d.name) + '">' +
+
+      '<button class="rm" data-s="site-rm" data-i="' + i + '">このサイトを消す</button></div>').join("") +
+      (siteDraft.length ? '' : '<p class="note">まだ販売サイトがありません。「＋ 販売サイトを追加」を押してください。</p>') +
+      '<button class="ghost" data-s="site-add">＋ 販売サイトを追加</button>' +
+      '<div class="err" id="st-err" style="margin-top:10px"></div>' +
+      '<button class="primary" data-s="site-save" style="margin-top:6px">保存する</button>';
+  } else {
+    body = (sites.length ? sites.map((x) => '<div class="kv"><span>' + esc(x.name) + '</span><span></span></div>').join("") : '<p class="note">まだ販売サイトが登録されていません。</p>') +
+      '<p class="note" style="margin-top:12px">登録・変更できるのは管理者だけです。</p>';
+  }
+  openSheet('<h3>販売サイト</h3><p class="note">売上を入れるときに選ぶ、販売サイトの名前を登録します。サイトごとの売上と手数料が、ホームと履歴に集計されます。手数料の金額は、売上を入れるときに入力します。</p>' +
+    (msg ? '<div class="ok">' + esc(msg) + '</div>' : '') + body + '<button class="ghost" data-s="menu">戻る</button>', "sites");
+}
+
+/* ---------- inventory (lots / items / stocktaking) ---------- */
+const inv = { filter: "stock", q: "", draft: null, missing: null };
+const _cc = { arr: null, map: null };
+function costOf(i) {
+  const lot = lots.filter((l) => l.id === i.lotId)[0];
+  if (lot && lot.mode === "lot" && lot.status === "open") {
+    if (_cc.arr !== items) { _cc.arr = items; _cc.map = {}; items.forEach((x) => { _cc.map[x.lotId] = (_cc.map[x.lotId] || 0) + 1; }); }
+    const n = _cc.map[lot.id] || 0;
+    return n ? Math.round((lot.total || 0) / n) : 0;
+  }
+  return i.cost;
+}
+const isProvisional = (i) => { const lot = lots.filter((l) => l.id === i.lotId)[0]; return !!(lot && lot.mode === "lot" && lot.status === "open"); };
+const openLots = () => lots.filter((l) => l.status === "open").sort((a, b) => ((b.seq || 0) - (a.seq || 0)) || ((b.createdAt || 0) - (a.createdAt || 0)));
+const lotItems = (lotId) => items.filter((x) => x.lotId === lotId).sort((a, b) => ((a.createdAt || 0) - (b.createdAt || 0)) || (a.no < b.no ? -1 : 1));
+async function commitOps(ops) {
+  for (let i = 0; i < ops.length; i += 400) {
+    const batch = writeBatch(db);
+    ops.slice(i, i + 400).forEach((o) => { if (o[0] === "set") batch.set(o[1], o[2]); else if (o[0] === "update") batch.update(o[1], o[2]); else batch.delete(o[1]); });
+    await batch.commit();
+  }
+}
+const DEFAULT_SUPPLIERS = [{ id: "tatsu", name: "たつ", mode: "lot" }];
+const supplierList = () => (suppliers === null ? DEFAULT_SUPPLIERS : suppliers);
+const supplierById = (id) => supplierList().filter((x) => x.id === id)[0];
+const modeName = (m) => (m === "lot" ? "ロット計算" : "仕入れ値計算");
+const newDraft = () => ({ lotId: "new", date: today(), supplierId: "", supplierText: "", mode: "item", total: "", memo: "", rows: [{ code: "", custom: false, name: "", cost: "", qty: "1", photo: null }] });
+function draftSupplierName(d) { if (d.supplierId === "__other") return (d.supplierText || "").trim(); const x = supplierById(d.supplierId); return x ? x.name : ""; }
+function splitCost(total, n) { const base = Math.floor(total / n), rem = total - base * n, out = []; for (let i = 0; i < n; i++) out.push(base + (i < rem ? 1 : 0)); return out; }
+const digits = (s) => toHalf(String(s)).replace(/[^0-9]/g, "");
+const numOf = (s) => { const d = digits(s); return d === "" ? NaN : parseInt(d, 10); };
+const fmtNum = (s) => { const d = digits(s).slice(0, 9); return d ? Number(d).toLocaleString("ja-JP") : ""; };
+const md = (s) => { const p = s.split("-"); return parseInt(p[1], 10) + "/" + parseInt(p[2], 10); };
+const sy = (n) => (n < 0 ? "−" : "") + yen(n);
+const stockItems = () => items.filter((i) => i.status === "stock");
+const sumOf = (list, f) => list.reduce((a, i) => a + f(i), 0);
+const lotOf = (it) => lots.filter((l) => l.id === it.lotId)[0] || { no: "", date: "", supplier: "", memo: "" };
+const itemById = (id) => items.filter((i) => i.id === id)[0];
+function nextLotSeq() {
+  let max = 0;
+  lots.forEach((l) => { if (typeof l.seq === "number" && l.seq > max) max = l.seq; });
+  return max + 1;
+}
+const lotLabel = (seq) => "ロットNo." + seq;
+const lotPrefix = (l) => (l && typeof l.seq === "number" ? "L" + l.seq : (l && l.no) || "");
+async function safe(p) {
+  let failed = false;
+  p.catch(() => { failed = true; });
+  await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
+  return !failed;
+}
+
+function itemRow(i) {
+  const right = i.status === "sold"
+    ? yen(i.price) + '<div class="profit' + (i.price - (i.fee || 0) - (i.shipping || 0) - costOf(i) < 0 ? " neg" : "") + '">利益 ' + sy(i.price - (i.fee || 0) - (i.shipping || 0) - costOf(i)) + (isProvisional(i) ? "（見込み）" : "") + '</div>'
+    : yen(costOf(i));
+  const tag = i.status === "stock" ? '<span class="tag stock">在庫</span>'
+    : i.status === "sold" ? '<span class="tag sold">販売済</span>'
+    : '<span class="tag lost">' + esc(i.reason || "外した") + '</span>';
+  return '<tr data-item="' + esc(i.id) + '"><td><div class="ir">' + thumbImg(i) + '<div><div class="nm">' + esc(i.name) + '</div><div class="no">' + esc(i.no) + '</div></div></div></td><td class="r">' + right + '</td><td>' + tag + '</td></tr>';
+}
+function itemTable(list) {
+  if (!list.length) return '<div class="card empty">該当する商品はありません。</div>';
+  return '<div class="tbl-wrap"><table class="t"><thead><tr><th>商品</th><th style="text-align:right">金額</th><th>状態</th></tr></thead><tbody>' + list.map(itemRow).join("") + '</tbody></table></div>';
+}
+
+function renderStock() {
+  const f = inv.filter, q = inv.q.trim().toLowerCase();
+  const list = items.filter((i) => {
+    if (f !== "all" && i.status !== f) return false;
+    if (q && (i.name + " " + i.no).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }).sort((a, b) => (a.no < b.no ? 1 : -1));
+  const stock = stockItems();
+  app.innerHTML =
+    '<header class="top"><h2 class="title" style="margin:0">在庫</h2><div class="sub">' + stock.length + '点・' + yen(sumOf(stock, costOf)) + '</div></header>' +
+    '<div class="acts"><button class="gbtn" data-act="lotadd">＋ 仕入れを登録</button><button class="gbtn" data-act="tocount">棚卸し' + (countState && countState.active ? "（中）" : "") + '</button></div>' +
+    '<div class="seg c3"><button data-f="stock" aria-pressed="' + (f === "stock") + '">在庫あり</button><button data-f="sold" aria-pressed="' + (f === "sold") + '">販売済</button><button data-f="lost" aria-pressed="' + (f === "lost") + '">外した</button></div>' +
+    '<input class="field" id="q" type="search" placeholder="商品名・管理番号で探す" value="' + esc(inv.q) + '" style="height:48px;margin-bottom:12px">' +
+    itemTable(list) +
+    (stock.length ? '<p style="text-align:center"><button class="link" data-act="printstock">棚卸表を印刷（A4）</button></p>' : '');
+}
+
+function draftPointCount(d) { return d.rows.reduce((a, r) => { const q = numOf(r.qty); return a + (isNaN(q) ? 0 : q); }, 0); }
+const draftLot = (d) => (d.lotId && d.lotId !== "new" ? lots.filter((l) => l.id === d.lotId)[0] : null);
+function lotTotalText() {
+  const d = inv.draft;
+  if (!d) return "";
+  const ex = draftLot(d), mode = ex ? ex.mode : d.mode, n = draftPointCount(d);
+  if (mode === "lot") {
+    const T = ex ? (ex.total || 0) : numOf(d.total);
+    if (isNaN(T)) return "ロットの金額を入れてください。ロットを終了すると、点数で割って1点ごとの仕入れ値が決まります。";
+    const have = ex ? items.filter((x) => x.lotId === ex.id).length : 0, all = have + n;
+    return "ロット " + yen(T) + (all ? " ÷ " + all + "点 ＝ いまの見込みは1点あたり約 " + yen(Math.round(T / all)) : "") + "。仕入れ値は、ロットを終了したときに確定します。" + (ex ? "" : "登録すると、経費に " + yen(T) + " が自動で入ります。");
+  }
+  const t = d.rows.reduce((a, r) => { const c = numOf(r.cost), q = numOf(r.qty); return a + ((isNaN(c) || isNaN(q)) ? 0 : c * q); }, 0);
+  return (ex ? "追加分の合計 " : "仕入れの合計 ") + yen(t) + "（登録すると、経費に自動で入ります）";
+}
+const rowCustom = (r) => !!(r.custom && String(r.code || "").trim());
+function planNos(d) {
+  const used = new Set(stockItems().map((i) => normNo(i.no)));
+  const reserved = new Set();
+  d.rows.forEach((r) => {
+    if (!rowCustom(r)) return;
+    const c = normNo(r.code), q = numOf(r.qty);
+    reserved.add(c);
+    if (!isNaN(q) && q > 1) for (let k = 1; k <= q; k++) reserved.add(normNo(r.code + "-" + k));
+  });
+  let cur = 1;
+  return d.rows.map((r) => {
+    if (rowCustom(r)) return { nums: null };
+    const q = numOf(r.qty), n = isNaN(q) || q < 1 ? 1 : Math.min(q, 99), nums = [];
+    for (let k = 0; k < n; k++) { while (used.has(String(cur)) || reserved.has(String(cur))) cur++; nums.push(cur); cur++; }
+    return { nums: nums };
+  });
+}
+function codeHintText(r, pl) {
+  const q = numOf(r.qty);
+  if (rowCustom(r)) return !isNaN(q) && q > 1 ? "番号：" + r.code + "-1 〜 " + r.code + "-" + q : "";
+  return pl.nums && pl.nums.length > 1 ? "番号：" + pl.nums[0] + " 〜 " + pl.nums[pl.nums.length - 1] : "";
+}
+function refreshAutoCodes() {
+  const d = inv.draft;
+  if (!d || state.view !== "lotadd") return;
+  const plan = planNos(d);
+  d.rows.forEach((r, i) => {
+    const el = app.querySelector ? app.querySelector('[data-i="' + i + '"][data-fld="code"]') : null;
+    if (el && !rowCustom(r) && document.activeElement !== el) el.value = String(plan[i].nums[0]);
+    const h = $("ch-" + i);
+    if (h) h.textContent = codeHintText(r, plan[i]);
+  });
+}
+function renderLotAdd() {
+  if (!inv.draft) inv.draft = newDraft();
+  const d = inv.draft, ex = draftLot(d);
+  if (d.lotId !== "new" && !ex) d.lotId = "new";
+  const mode = ex ? ex.mode : d.mode, isLot = mode === "lot";
+  const singleStep = !ex && !isLot;
+  const plan = planNos(d);
+  const rows = d.rows.map((r, i) => {
+    const shown = rowCustom(r) ? r.code : (r.custom ? "" : String(plan[i].nums[0]));
+    return '<div class="rowcard"><input class="field" data-i="' + i + '" data-fld="name" type="text" maxlength="60" placeholder="商品名" value="' + esc(r.name) + '">' +
+      '<label class="mini">商品番号（自動で順番に入ります。変えることもできます）</label>' +
+      '<input class="field" data-i="' + i + '" data-fld="code" type="text" maxlength="30" autocomplete="off" autocapitalize="none" placeholder="商品番号" value="' + esc(shown) + '" style="margin-bottom:4px">' +
+      '<div class="hint" id="ch-' + i + '" style="margin:0 4px 10px">' + esc(codeHintText(r, plan[i])) + '</div>' +
+      '<div class="prow">' + (r.photo ? '<img class="pthumb" src="' + esc(r.photo.thumb) + '" alt="">' : '') +
+      '<label class="pbtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>' + (r.photo ? "写真を変える" : "写真を追加") + '<input type="file" accept="image/*" data-photo="' + i + '" hidden></label>' +
+      (r.photo ? '<button class="rm" data-photo-rm="' + i + '" style="padding:0 0 0 6px">写真を消す</button>' : '') + '</div>' +
+      (isLot
+        ? '<input class="field" data-i="' + i + '" data-fld="qty" type="text" inputmode="numeric" placeholder="個数" value="' + esc(r.qty) + '" style="margin-bottom:0">'
+        : '<div class="two"><input class="field" data-i="' + i + '" data-fld="cost" type="text" inputmode="numeric" placeholder="仕入れ値（円）" value="' + esc(r.cost) + '">' +
+          '<input class="field" data-i="' + i + '" data-fld="qty" type="text" inputmode="numeric" placeholder="個数" value="' + esc(r.qty) + '"></div>') +
+      (d.rows.length > 1 ? '<button class="rm" data-rm="' + i + '">この行を消す</button>' : '') + '</div>';
+  }).join("");
+  const sel = ex ? "l:" + ex.id : (d.supplierId ? "s:" + d.supplierId : "");
+  const supOpts = '<option value="">選んでください</option>' +
+    '<optgroup label="新規ロット（仕入れ先を選ぶ）">' +
+    supplierList().map((x) => '<option value="s:' + esc(x.id) + '"' + (sel === "s:" + x.id ? " selected" : "") + '>' + esc(x.name) + '（' + modeName(x.mode) + '）</option>').join("") +
+    '<option value="s:__other"' + (sel === "s:__other" ? " selected" : "") + '>その他（仕入れ先を入れる）</option></optgroup>' +
+    (openLots().length ? '<optgroup label="進行中のロット（商品を追加する）">' +
+      openLots().map((l) => '<option value="l:' + esc(l.id) + '"' + (sel === "l:" + l.id ? " selected" : "") + '>' + esc(l.no) + '（' + esc(l.supplier || "") + '・' + modeName(l.mode) + '・' + items.filter((x) => x.lotId === l.id).length + '点）</option>').join("") + '</optgroup>' : '');
+  const have = ex ? items.filter((x) => x.lotId === ex.id).length : 0;
+  app.innerHTML =
+    '<header class="top"><h2 class="title" style="margin:0">仕入れを登録</h2></header>' +
+    '<label class="f" for="d-sup">仕入れ先・ロット</label><select class="field" id="d-sup" style="margin-bottom:' + (d.supplierId === "__other" && !ex ? "8px" : "16px") + '">' + supOpts + '</select>' +
+    (ex
+      ? '<div class="card" style="margin-bottom:14px;padding:10px 14px"><div class="kv"><span>ロット</span><span>' + esc(ex.no) + '</span></div>' +
+        '<div class="kv"><span>仕入れ先</span><span>' + esc(ex.supplier || "－") + '</span></div>' +
+        '<div class="kv"><span>仕入れ値の計算</span><span>' + modeName(ex.mode) + '</span></div>' +
+        (ex.mode === "lot" ? '<div class="kv"><span>ロットの金額</span><span>' + yen(ex.total || 0) + '</span></div>' : '') +
+        '<div class="kv" style="border-bottom:0"><span>登録ずみ</span><span>' + have + '点</span></div></div>'
+      : (d.supplierId === "__other" ? '<input class="field" id="d-suptext" data-h="supplierText" type="text" maxlength="40" placeholder="仕入れ先の名前（例：山田商店）" value="' + esc(d.supplierText) + '">' : '')) +
+    '<label class="f" for="d-date">' + (ex ? "登録した日" : "仕入れた日") + '</label><input class="field" id="d-date" data-h="date" type="date" value="' + esc(d.date) + '">' +
+    (ex ? '' :
+      (isLot ? '<label class="f" for="d-total">ロットの金額（まとめて払った合計・円）</label><input class="field" id="d-total" data-h="total" type="text" inputmode="numeric" placeholder="例：30,000" value="' + esc(d.total) + '">' : '') +
+      '<label class="f" for="d-memo">メモ（任意）</label><input class="field" id="d-memo" data-h="memo" type="text" maxlength="60" value="' + esc(d.memo) + '">') +
+    '<div class="sec-title"><span>' + (ex ? "追加する商品" : "商品") + '（同じ物は個数でまとめられます）</span></div>' + rows +
+    '<p class="note">商品番号は、自動で順番に入ります。個数が2以上のときは、続けて番号がつきます。</p>' +
+    '<button class="gbtn" data-act="addrow" style="margin:0 0 16px;width:100%">＋ 商品を追加</button>' +
+    '<div class="err" id="err"></div>' +
+    (singleStep ? '' : '<p class="note" id="lotno">' + esc(ex ? ex.no : lotLabel(nextLotSeq())) + (ex ? '' : '（新規ロットの番号は、自動でつきます）') + '</p>') +
+    '<p class="note" id="lottotal">' + lotTotalText() + '</p>' +
+    '<button class="primary" data-act="savelot">' + (singleStep ? "登録する" : (ex ? "このロットに登録する" : "ロットを作って登録する")) + '</button>' +
+    (singleStep ? '' : '<button class="gbtn" data-act="savelotclose" style="width:100%;margin-top:10px">登録して、このロットを終了する</button>') +
+    (ex ? '<button class="ghost n" data-act="closelot">商品を追加せずに、このロットを終了する</button>' : '') +
+    '<button class="ghost n" data-go="stock">やめて在庫に戻る</button>';
+}
+
+function closeOps(lot, extra) {
+  // returns ops that finalize a lot; extra = [{ref,data}] new item docs already counted by caller
+  const ops = [];
+  const ex = lotItems(lot.id);
+  const n = ex.length + (extra ? extra.length : 0);
+  if (lot.mode === "lot" && n > 0) {
+    const per = splitCost(lot.total || 0, n);
+    ex.forEach((it, i) => { if (it.cost !== per[i]) ops.push(["update", doc(db, "items", it.id), { cost: per[i] }]); });
+    if (extra) extra.forEach((x, k) => { x.data.cost = per[ex.length + k]; });
+  }
+  return ops;
+}
+
+async function saveLot(closeAfter) {
+  const d = inv.draft, err = $("err"), rows = [];
+  const ex = draftLot(d);
+  const isLot = ex ? ex.mode === "lot" : d.mode === "lot";
+  if (!ex && !isLot) closeAfter = true;
+  if (ex && ex.status !== "open") { err.textContent = "このロットは、すでに終了しています。"; return; }
+  if (!d.date) { err.textContent = "日付を選んでください。"; return; }
+  let supName, lotTotal = 0;
+  if (ex) supName = ex.supplier || "";
+  else {
+    if (!d.supplierId) { err.textContent = "仕入れ先を選んでください。"; return; }
+    supName = draftSupplierName(d);
+    if (!supName) { err.textContent = "仕入れ先の名前を入れてください。"; return; }
+    if (isLot) {
+      lotTotal = numOf(d.total);
+      if (isNaN(lotTotal)) { err.textContent = "ロットの金額を入れてください。"; return; }
+    }
+  }
+  let total = 0;
+  for (let i = 0; i < d.rows.length; i++) {
+    const r = d.rows[i], cost = isLot ? 0 : numOf(r.cost), qty = numOf(r.qty);
+    if (!r.name.trim()) { err.textContent = (i + 1) + "行目の商品名を入れてください。"; return; }
+    if (!isLot && isNaN(cost)) { err.textContent = (i + 1) + "行目の仕入れ値を入れてください。"; return; }
+    if (isNaN(qty) || qty < 1 || qty > 99) { err.textContent = (i + 1) + "行目の個数は1〜99にしてください。"; return; }
+    total += qty;
+    rows.push({ photo: r.photo || null, code: (rowCustom(r) ? String(r.code) : "").normalize("NFKC").trim().slice(0, 30), name: r.name.trim().slice(0, 60), cost: cost, qty: qty });
+  }
+  if (total > 200) { err.textContent = "1回の登録は、合計200点までです。"; return; }
+  const addCost = isLot ? 0 : rows.reduce((a, r) => a + r.cost * r.qty, 0);
+  if (addCost >= 10000000000 || lotTotal >= 10000000000) { err.textContent = "金額が大きすぎます。"; return; }
+  const seq = ex ? ex.seq : nextLotSeq();
+  const no = ex ? ex.no : lotLabel(seq), pfx = ex ? lotPrefix(ex) : "L" + seq;
+  const lotRef = ex ? doc(db, "lots", ex.id) : doc(collection(db, "lots")), lotId = ex ? ex.id : lotRef.id, now = Date.now();
+  const used = new Set(stockItems().map((i) => normNo(i.no)));
+  const plan = [];
+  const photoRefs = {};
+  rows.forEach((r, ri) => { if (r.photo) photoRefs[ri] = doc(collection(db, "photos")); });
+  const autoNums = planNos(d);
+  let autoN = 0;
+  if (ex) items.forEach((x) => { if (x.lotId === ex.id) { const m = /-(\d{3})$/.exec(x.no || ""); if (m && x.no.indexOf(pfx + "-") === 0) autoN = Math.max(autoN, parseInt(m[1], 10)); } });
+  for (let ri = 0; ri < rows.length; ri++) {
+    const r = rows[ri];
+    for (let k = 0; k < r.qty; k++) {
+      let itemNo;
+      if (r.code) itemNo = r.qty > 1 ? r.code + "-" + (k + 1) : r.code;
+      else itemNo = String(autoNums[ri].nums[k]);
+      const key = normNo(itemNo);
+      if (used.has(key)) { err.textContent = "商品番号「" + itemNo + "」は、すでに使われています。"; return; }
+      used.add(key);
+      const idata = { lotId: lotId, no: itemNo, name: r.name, cost: r.cost, status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, by: me.name, createdAt: now };
+      if (r.photo) { idata.thumb = r.photo.thumb; idata.photoId = photoRefs[ri].id; }
+      plan.push({ ref: doc(collection(db, "items")), data: idata });
+    }
+  }
+  const lotNow = ex ? Object.assign({}, ex) : { mode: d.mode, total: lotTotal };
+  const ops = [];
+  let expenseAmount = 0;
+  if (!ex) {
+    expenseAmount = isLot ? lotTotal : addCost;
+    const expRef = expenseAmount > 0 ? doc(collection(db, "records")) : null;
+    const lotData = { no: no, seq: seq, date: d.date, supplier: supName, mode: d.mode, total: expenseAmount, memo: d.memo.trim(), status: closeAfter ? "closed" : "open", by: me.name, createdAt: now, recordId: expRef ? expRef.id : "" };
+    if (closeAfter) lotData.closedDate = today();
+    ops.push(["set", lotRef, lotData]);
+    if (expRef) ops.push(["set", expRef, { type: "expense", date: d.date, amount: expenseAmount, memo: (isLot ? "仕入れ " + no + "（" + supName + "）" : "仕入れ（" + supName + "）").slice(0, 100), by: me.name, uid: me.uid, createdAt: now, lotId: lotRef.id }]);
+    lotNow.total = expenseAmount; lotNow.id = lotId; lotNow.status = closeAfter ? "closed" : "open";
+  } else if (!isLot && addCost > 0) {
+    expenseAmount = addCost;
+    ops.push(["set", doc(collection(db, "records")), { type: "expense", date: d.date, amount: addCost, memo: ("仕入れ " + no + "（" + supName + "・追加）").slice(0, 100), by: me.name, uid: me.uid, createdAt: now, lotId: ex.id }]);
+    ops.push(["update", lotRef, { total: (ex.total || 0) + addCost }]);
+  }
+  if (closeAfter) {
+    const fin = closeOps(Object.assign({}, lotNow, { id: lotId }), plan);
+    fin.forEach((o) => ops.push(o));
+    if (ex) ops.push(["update", lotRef, { status: "closed", closedDate: today() }]);
+  }
+  Object.keys(photoRefs).forEach((ri) => ops.push(["set", photoRefs[ri], { data: rows[ri].photo.full, createdAt: now }]));
+  plan.forEach((pl) => ops.push(["set", pl.ref, pl.data]));
+  const btns = document.querySelectorAll('[data-act="savelot"],[data-act="savelotclose"]');
+  const btn = document.querySelector('[data-act="savelot"]');
+  if (btn) btn.disabled = true;
+  const ok = await safe(commitOps(ops));
+  if (!ok) { if (btn) btn.disabled = false; err.textContent = "登録できませんでした。通信や権限を確認してください。"; return; }
+  inv.draft = null; inv.filter = "stock"; inv.q = "";
+  toast(no + (closeAfter ? " を登録して、終了しました" : " に登録しました") + (expenseAmount ? "。経費 " + yen(expenseAmount) + " を計上" : ""));
+  go("stock");
+}
+
+async function closeLotOnly(btn) {
+  const d = inv.draft, ex = draftLot(d), err = $("err");
+  if (!ex || ex.status !== "open") return;
+  if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "もう一度押すと、このロットを終了します"; return; }
+  const ops = closeOps(ex, null);
+  ops.push(["update", doc(db, "lots", ex.id), { status: "closed", closedDate: today() }]);
+  const ok = await safe(commitOps(ops));
+  if (!ok) { err.textContent = "終了できませんでした。通信や権限を確認してください。"; return; }
+  inv.draft = null;
+  toast(ex.no + " を終了しました");
+  go("stock");
+}
+
+function renderCount() {
+  const stock = stockItems();
+  const c = countState && countState.active ? countState : null;
+  const last = counts.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+  if (!c) {
+    app.innerHTML =
+      '<header class="top"><h2 class="title" style="margin:0">棚卸し</h2></header>' +
+      '<div class="card" style="margin-bottom:14px"><div class="k">いまの在庫</div><div class="v">' + stock.length + '点</div>' +
+      '<p class="note" style="margin:10px 0 0">' + (last ? '前回：' + md(last.date) + '（差異 ' + last.missing + '件）' : 'まだ棚卸しの記録はありません。') + '</p></div>' +
+      '<p class="note">実際の商品を見ながら、1点ずつタップして「ある」を確認します。確認できなかった商品は、最後に理由をつけて在庫から外せます。確認の状況は、全員の画面で共有されます。</p>' +
+      (stock.length ? '<button class="primary" data-act="startcount">棚卸しを始める</button>' : '<div class="card empty">在庫の商品がありません。</div>') +
+      '<button class="ghost n" data-go="stock">在庫に戻る</button>';
+    return;
+  }
+  const checked = c.checked || {};
+  const done = stock.filter((i) => checked[i.id]).length, total = stock.length;
+  const list = stock.slice().sort((a, b) => (a.no < b.no ? -1 : 1));
+  app.innerHTML =
+    '<header class="top"><h2 class="title" style="margin:0">棚卸し中</h2><div class="sub">確認 ' + done + ' / ' + total + '</div></header>' +
+    '<p class="note">' + esc(c.by || "") + 'さんが ' + esc(c.start || "") + ' に開始</p>' +
+    '<div class="bar"><div style="width:' + (total ? Math.round(done / total * 100) : 0) + '%"></div></div>' +
+    list.map((i) =>
+      '<button class="chkrow' + (checked[i.id] ? " on" : "") + '" data-chk="' + esc(i.id) + '"><span class="box">✓</span>' + thumbImg(i) + '<span class="main"><div class="nm">' + esc(i.name) + '</div><div class="no">' + esc(i.no) + '</div></span><span class="amt">' + yen(costOf(i)) + '</span></button>').join("") +
+    '<button class="primary" data-act="finishcount" style="margin-top:8px">棚卸しを終える</button>' +
+    '<button class="ghost n" data-act="cancelcount">やめる</button>';
+}
+
+function sheetItem(id) {
+  const it = itemById(id);
+  if (!it) return;
+  const lot = lotOf(it);
+  let h = '<h3>' + esc(it.name) + '</h3><p class="note">' + esc(it.no) + '</p>' +
+    '<div class="phbox">' + (it.thumb || it.photoId ? '<img id="ph-img" alt="" src="' + esc(it.thumb || "") + '">' : '<div class="noph">写真はありません</div>') +
+    '<label class="pbtn" style="margin-top:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>' + (it.thumb ? "写真を変える" : "写真を追加") + '<input type="file" accept="image/*" data-iphoto="' + esc(it.id) + '" hidden></label></div>' +
+    (lot.mode === "lot" ? '<div class="kv"><span>ロット</span><span>' + esc(lot.no || "－") + '</span></div>' : '') +
+    '<div class="kv"><span>仕入れ値</span><span>' + yen(costOf(it)) + (isProvisional(it) ? '（見込み・ロット終了で確定）' : '') + '</span></div>' +
+    '<div class="kv"><span>仕入れた日</span><span>' + esc(lot.date || "－") + '</span></div>' +
+    '<div class="kv"><span>仕入れ先</span><span>' + esc(lot.supplier || "－") + '</span></div>' +
+    (lot.mode ? '<div class="kv"><span>仕入れ値の計算</span><span>' + modeName(lot.mode) + (lot.mode === "lot" ? '（ロット ' + yen(lot.total || 0) + '）' : '') + '</span></div>' : '');
+  if (it.status === "stock") {
+    h += '<p class="note" style="margin-top:16px">売れたときは、「記録する」の売上で、この商品番号を入れます。</p>' +
+      '<button class="primary" data-s="tosale" data-id="' + esc(it.id) + '">この商品の売上を記録する</button>' +
+      '<p class="note" style="margin-top:18px">売れなくなったとき（在庫から外す）</p>' +
+      '<div class="reasons"><button data-s="lose" data-r="紛失" data-id="' + esc(it.id) + '">紛失</button><button data-s="lose" data-r="破損" data-id="' + esc(it.id) + '">破損</button><button data-s="lose" data-r="その他" data-id="' + esc(it.id) + '">その他</button></div>';
+  } else if (it.status === "sold") {
+    h += '<div class="kv"><span>売値</span><span>' + yen(it.price) + '</span></div>' +
+      (it.site ? '<div class="kv"><span>販売サイト</span><span>' + esc(it.site) + '</span></div>' : '') +
+      '<div class="kv"><span>手数料</span><span>' + yen(it.fee || 0) + '</span></div>' +
+      '<div class="kv"><span>送料</span><span>' + yen(it.shipping || 0) + '</span></div>' +
+      '<div class="kv"><span>利益（手数料・送料・仕入れ値を引く）</span><span>' + sy(it.price - (it.fee || 0) - (it.shipping || 0) - costOf(it)) + '</span></div>' +
+      '<div class="kv"><span>売れた日</span><span>' + esc(it.soldDate) + '</span></div>' +
+      '<p class="note" style="margin-top:12px">「在庫に戻す」と、売上の記録も消えます。</p>' +
+      '<button class="ghost danger" data-s="back" data-id="' + esc(it.id) + '">在庫に戻す</button>';
+  } else {
+    h += '<div class="kv"><span>理由</span><span>' + esc(it.reason) + '</span></div>' +
+      '<button class="ghost danger" data-s="back" data-id="' + esc(it.id) + '" style="margin-top:16px">在庫に戻す</button>';
+  }
+  h += '<button class="ghost" data-s="close">閉じる</button>';
+  openSheet(h, "item");
+  if (it.photoId) getDoc(doc(db, "photos", it.photoId)).then((sn) => { const el = $("ph-img"); if (el && sn.exists() && sn.data().data) el.src = sn.data().data; }, () => {});
+}
+
+function sheetFinish() {
+  const c = countState; if (!c || !c.active) return;
+  const checked = c.checked || {}, stock = stockItems();
+  const missing = stock.filter((i) => !checked[i.id]);
+  inv.missing = { ids: missing.map((i) => i.id), total: stock.length };
+  if (!missing.length) {
+    openSheet('<h3>差異なし</h3><p class="note">在庫の ' + stock.length + ' 点すべてを確認しました。</p>' +
+      '<button class="primary" data-s="apply">記録して終わる</button><button class="ghost" data-s="close">戻る</button>', "finish");
+    return;
+  }
+  openSheet('<h3>確認できなかった商品 ' + missing.length + '点</h3><p class="note">理由を選んで「反映」を押すと、在庫から外れます。まだ探すときは「戻る」を押します。</p>' +
+    missing.map((i) =>
+      '<div class="miss"><div><div class="nm">' + esc(i.name) + '</div><div class="no">' + esc(i.no) + '</div></div>' +
+      '<select class="field" data-miss="' + esc(i.id) + '"><option>紛失</option><option>破損</option><option>その他</option></select></div>').join("") +
+    '<button class="primary" data-s="apply" style="margin-top:16px">反映して終わる</button><button class="ghost" data-s="close">戻る</button>', "finish");
+}
+
+async function invSheet(b) {
+  const a = b.dataset.s;
+  if (a === "suppliers") { supDraft = null; sheetSuppliers(); return true; }
+  if (a === "sup-add") { supDraft.push({ id: "p" + Math.random().toString(36).slice(2, 8), name: "", mode: "item" }); sheetSuppliers(); return true; }
+  if (a === "sup-rm") { supDraft.splice(+b.dataset.i, 1); sheetSuppliers(); return true; }
+  if (a === "sup-save") {
+    const err = $("sp-err"), names = {}, list = [];
+    for (let i = 0; i < supDraft.length; i++) {
+      const dd = supDraft[i], name = dd.name.trim();
+      if (!name) { err.textContent = (i + 1) + "つ目の仕入れ先の名前を入れてください。"; return true; }
+      if (names[name]) { err.textContent = "「" + name + "」が重なっています。"; return true; }
+      names[name] = 1;
+      list.push({ id: dd.id, name: name.slice(0, 20), mode: dd.mode === "lot" ? "lot" : "item" });
+    }
+    const ok = await safe(setDoc(doc(db, "state", "suppliers"), { list: list }));
+    if (!ok) { err.textContent = "保存できませんでした。管理者のアカウントか確認してください。"; return true; }
+    supDraft = null; sheetSuppliers("保存しました。");
+    return true;
+  }
+  if (a === "sites") { siteDraft = null; sheetSites(); return true; }
+  if (a === "site-add") { siteDraft.push({ id: "s" + Math.random().toString(36).slice(2, 8), name: "", rate: "0", fixed: "0" }); sheetSites(); return true; }
+  if (a === "site-rm") { siteDraft.splice(+b.dataset.i, 1); sheetSites(); return true; }
+  if (a === "site-save") {
+    const err = $("st-err"), names = {}, list = [];
+    for (let i = 0; i < siteDraft.length; i++) {
+      const dd = siteDraft[i], name = dd.name.trim();
+      if (!name) { err.textContent = (i + 1) + "つ目のサイト名を入れてください。"; return true; }
+      if (names[name]) { err.textContent = "「" + name + "」が重なっています。"; return true; }
+      names[name] = 1;
+      list.push({ id: dd.id, name: name.slice(0, 20), rate: Number(dd.rate) || 0, fixed: Math.round(Number(dd.fixed) || 0) });
+    }
+    const ok = await safe(setDoc(doc(db, "state", "sites"), { list: list }));
+    if (!ok) { err.textContent = "保存できませんでした。管理者のアカウントか確認してください。"; return true; }
+    siteDraft = null; sheetSites("保存しました。");
+    return true;
+  }
+  if (a === "tosale") {
+    const t = itemById(b.dataset.id);
+    if (t) { state.prefillNo = t.no; state.type = "sales"; state.editId = null; closeSheet(); go("add"); updateSaleHints(); }
+    return true;
+  }
+  if (a !== "lose" && a !== "back" && a !== "apply") return false;
+  if (a === "apply") {
+    const m = inv.missing; if (!m) return true;
+    const batch = writeBatch(db);
+    m.ids.forEach((id) => {
+      const sel = sheet.querySelector('select[data-miss="' + id + '"]');
+      batch.update(doc(db, "items", id), { status: "lost", reason: sel ? sel.value : "紛失", lostDate: today() });
+    });
+    batch.set(doc(collection(db, "counts")), { date: today(), total: m.total, missing: m.ids.length, by: me.name, createdAt: Date.now() });
+    batch.set(doc(db, "state", "count"), { active: false, checked: {} });
+    const ok = await safe(batch.commit());
+    if (!ok) { toast("反映できませんでした"); return true; }
+    inv.missing = null; closeSheet(); toast("棚卸しを記録しました");
+    return true;
+  }
+  const it = itemById(b.dataset.id);
+  if (!it) { closeSheet(); return true; }
+  if (a === "lose") {
+    const ok = await safe(setDoc(doc(db, "items", it.id), { status: "lost", reason: b.dataset.r, lostDate: today() }, { merge: true }));
+    closeSheet(); toast(ok ? "在庫から外しました" : "できませんでした");
+  } else if (a === "back") {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "items", it.id), { status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, shipMethod: "" });
+    if (it.recordId) batch.delete(doc(db, "records", it.recordId));
+    const ok = await safe(batch.commit());
+    closeSheet(); toast(ok ? "在庫に戻しました" : "できませんでした");
+  }
+  return true;
+}
+
+function openPrintWindow(bodyHtml, title) {
+  // ホーム画面に追加したアプリ（PWA）内では window.print() が反応しないことがあるため、
+  // 別タブ（ブラウザ本体）を開いて、そちらで印刷ダイアログを出す。
+  let w = null;
+  try { w = window.open("", "_blank"); } catch (x) {}
+  if (w && w.document) {
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title || "印刷") + '</title><style>' + PRINT_CSS + '</style></head><body>' + bodyHtml + '</body></html>');
+    w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch (x) {} }, 250);
+    return;
+  }
+  // 新しいタブが開けなかったとき（ポップアップブロックなど）は、その場での印刷にフォールバック
+  $("printarea").innerHTML = "<style>" + PRINT_CSS + "</style>" + bodyHtml;
+  setTimeout(() => { try { window.print(); } catch (x) {} }, 150);
+  toast("印刷用の画面を開けませんでした。別タブが開ける設定か確認してください。");
+}
+function printStock() {
+  const list = stockItems().sort((a, b) => (a.no < b.no ? -1 : 1));
+  const now = new Date();
+  const rows = list.map((i) => '<tr><td class="c">' + esc(i.no) + '</td><td>' + esc(i.name) + '</td><td class="r">' + yen(costOf(i)) + '</td><td class="c" style="width:16mm">□</td></tr>').join("") || '<tr><td colspan="4" style="text-align:center">在庫はありません</td></tr>';
+  const body = '<div class="p-h"><b>物販台帳　棚卸表</b><span>出力日 ' + now.getFullYear() + '/' + (now.getMonth() + 1) + '/' + now.getDate() + '</span></div>' +
+    '<div class="p-sum"><div><small>在庫の点数</small><strong>' + list.length + '点</strong></div><div><small>在庫の金額（仕入れ値）</small><strong>' + yen(sumOf(list, costOf)) + '</strong></div></div>' +
+    '<table><thead><tr><th>管理番号</th><th>商品名</th><th class="r">仕入れ値</th><th>確認</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  openPrintWindow(body, "棚卸表");
+}
+
+function invClick(e) {
+  const ti = e.target.closest("tr[data-item], .rk[data-item]");
+  if (ti) { sheetItem(ti.dataset.item); return true; }
+  const b = e.target.closest("button"); if (!b) return false;
+  if (b.dataset.go === "stock") { go("stock"); return true; }
+  if (b.dataset.cand) { const n = $("f-no"); if (n) { n.value = b.dataset.cand; updateSaleHints(); } return true; }
+  if (b.dataset.photoRm !== undefined && inv.draft) { const r = inv.draft.rows[+b.dataset.photoRm]; if (r) { r.photo = null; render(true); } return true; }
+  if (b.dataset.f) { inv.filter = b.dataset.f; render(true); return true; }
+  if (b.dataset.chk) {
+    const id = b.dataset.chk, cur = !!(countState && countState.checked && countState.checked[id]);
+    setDoc(doc(db, "state", "count"), { checked: { [id]: !cur } }, { merge: true }).catch(() => toast("反映できませんでした"));
+    return true;
+  }
+  if (b.dataset.rm) { inv.draft.rows.splice(+b.dataset.rm, 1); render(true); return true; }
+  const a = b.dataset.act;
+  if (a === "lotadd") { go("lotadd"); return true; }
+  if (a === "tocount") { go("count"); return true; }
+  if (a === "printstock") { printStock(); return true; }
+  if (a === "addrow") { inv.draft.rows.push({ code: "", custom: false, name: "", cost: "", qty: "1", photo: null }); render(true); return true; }
+  if (a === "savelot") { saveLot(false); return true; }
+  if (a === "savelotclose") { saveLot(true); return true; }
+  if (a === "closelot") { closeLotOnly(b); return true; }
+  if (a === "startcount") {
+    setDoc(doc(db, "state", "count"), { active: true, start: today(), by: me.name, checked: {} }).catch(() => toast("始められませんでした"));
+    return true;
+  }
+  if (a === "cancelcount") {
+    setDoc(doc(db, "state", "count"), { active: false, checked: {} }).catch(() => toast("できませんでした"));
+    return true;
+  }
+  if (a === "finishcount") { sheetFinish(); return true; }
+  return false;
+}
+
+app.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.id === "f-img") { const f = t.files && t.files[0]; if (f) handleTradeImage(f); try { t.value = ""; } catch (x) {} return; }
+  if (t.dataset && t.dataset.photo !== undefined && t.files && t.files[0] && inv.draft) {
+    const i = +t.dataset.photo;
+    compressPhoto(t.files[0]).then((ph) => { if (inv.draft && inv.draft.rows[i]) { inv.draft.rows[i].photo = ph; render(true); } }, () => toast("写真を読み込めませんでした"));
+    return;
+  }
+  if (t.id === "f-shipm" || t.id === "f-site") { keepAndRender(); return; }
+  if (t.id === "d-sup" && inv.draft) {
+    const v = t.value;
+    if (v.indexOf("l:") === 0) inv.draft.lotId = v.slice(2);
+    else {
+      const id = v.indexOf("s:") === 0 ? v.slice(2) : "", x = supplierById(id);
+      inv.draft.lotId = "new"; inv.draft.supplierId = id; inv.draft.mode = x ? x.mode : "item";
+    }
+    render(true);
+    return;
+  }
+  if (t.dataset && t.dataset.fld === "code" && inv.draft) {
+    const r = inv.draft.rows[+t.dataset.i];
+    if (r && !String(r.code || "").trim()) { r.custom = false; refreshAutoCodes(); }
+  }
+});
+app.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.id === "q") {
+    inv.q = t.value; const pos = t.selectionStart; renderStock();
+    const q2 = $("q"); q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (x) {}
+    return;
+  }
+  if (!inv.draft || state.view !== "lotadd") return;
+  if (t.dataset.h) {
+    if (t.dataset.h === "total") t.value = fmtNum(t.value);
+    inv.draft[t.dataset.h] = t.value;
+    if (t.dataset.h === "total") { const lt = $("lottotal"); if (lt) lt.textContent = lotTotalText(); }
+
+    return;
+  }
+  if (t.dataset.fld) {
+    const i = +t.dataset.i, f = t.dataset.fld;
+    if (f === "cost") t.value = fmtNum(t.value);
+    if (f === "qty") t.value = digits(t.value).slice(0, 2);
+    inv.draft.rows[i][f] = t.value;
+    if (f === "code") inv.draft.rows[i].custom = true;
+    if (f === "code" || f === "qty") refreshAutoCodes();
+    const lt = $("lottotal"); if (lt) lt.textContent = lotTotalText();
+  }
+});
+
+/* ---------- analytics (charts + search) ---------- */
+const anState = { period: "year", q: "" };
+const PAL = ["#c48f9f", "#8f86ad", "#7f9bb5", "#a9917f", "#8fa89a", "#b49aa6", "#9aa7b8", "#c0a98e"];
+function inPeriod(dateStr) {
+  if (!dateStr) return false;
+  const now = new Date();
+  if (anState.period === "all") return true;
+  if (anState.period === "month") return dateStr.slice(0, 7) === ym(now);
+  return dateStr.slice(0, 4) === String(now.getFullYear());
+}
+const periodLabel = () => (anState.period === "month" ? "今月" : anState.period === "year" ? "今年" : "全期間");
+function manText(n) {
+  const a = Math.abs(n), sign = n < 0 ? "−" : "";
+  if (a >= 10000) return sign + (Math.round(a / 1000) / 10) + "万";
+  return sign + a.toLocaleString("ja-JP");
+}
+function niceStep(range, ticks) {
+  const raw = Math.max(range, 1) / ticks, pow = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / pow;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
+}
+function monthlyChart() {
+  const now = new Date(), months = [];
+  for (let i = 11; i >= 0; i--) months.push(ym(new Date(now.getFullYear(), now.getMonth() - i, 1)));
+  const data = months.map((m) => { const t = sums(records.filter((r) => r.date && r.date.slice(0, 7) === m)); return { m: m, s: t.s, p: t.b }; });
+  let max = Math.max.apply(null, [1].concat(data.map((d) => Math.max(d.s, d.p, 0))));
+  let min = Math.min.apply(null, [0].concat(data.map((d) => d.p)));
+  const step = niceStep(max - min, 4);
+  max = Math.ceil(max / step) * step; min = Math.floor(min / step) * step;
+  const W = 340, H = 220, L = 46, R = 6, T = 10, B = 26, iw = W - L - R, ih = H - T - B;
+  const y = (v) => T + ih - (v - min) / (max - min) * ih;
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="月別の売上と純利益">';
+  for (let v = min; v <= max + 0.001; v += step) {
+    svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>' +
+      '<text x="' + (L - 6) + '" y="' + (y(v) + 3).toFixed(1) + '" font-size="9" text-anchor="end" fill="var(--muted)">' + manText(v) + '</text>';
+  }
+  const gw = iw / 12, bw = gw * 0.32, z = y(0);
+  data.forEach((d, i) => {
+    const x0 = L + i * gw + gw * 0.14;
+    const bar = (v, x, col) => {
+      if (!v) return "";
+      const top = Math.min(y(v), z), h = Math.max(Math.abs(y(v) - z), 1);
+      return '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2" fill="' + col + '"/>';
+    };
+    svg += bar(d.s, x0, "var(--sales)") + bar(d.p, x0 + bw + 2, "var(--expense)") +
+      '<text x="' + (L + i * gw + gw / 2).toFixed(1) + '" y="' + (H - 8) + '" font-size="9" text-anchor="middle" fill="var(--muted)">' + parseInt(d.m.slice(5), 10) + '月</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+function donutHtml(rawItems, fmtVal, emptyMsg) {
+  let arr = rawItems.filter((x) => x.value > 0).sort((a, b) => b.value - a.value);
+  if (!arr.length) return '<div class="empty" style="padding:18px 8px">' + esc(emptyMsg) + '</div>';
+  if (arr.length > 6) { const rest = arr.slice(5).reduce((a, x) => a + x.value, 0); arr = arr.slice(0, 5).concat([{ name: "その他", value: rest }]); }
+  const total = arr.reduce((a, x) => a + x.value, 0), r = 50, C = 2 * Math.PI * r;
+  let off = 0, segs = "";
+  arr.forEach((x, i) => {
+    const len = x.value / total * C, d = Math.max(len - 2, 0.6);
+    segs += '<circle cx="70" cy="70" r="' + r + '" fill="none" stroke="' + PAL[i % PAL.length] + '" stroke-width="24" stroke-dasharray="' + d.toFixed(2) + ' ' + (C - d).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)"/>';
+    off += len;
+  });
+  const leg = arr.map((x, i) => '<div class="dli"><span class="dsw" style="background:' + PAL[i % PAL.length] + '"></span><span class="nm2">' + esc(x.name) + '</span><b>' + fmtVal(x.value) + '</b></div>').join("");
+  return '<div class="donut-wrap"><svg viewBox="0 0 140 140" width="132" height="132" style="flex:none" role="img"><circle cx="70" cy="70" r="' + r + '" fill="none" stroke="var(--line)" stroke-width="24" opacity=".35"/>' + segs + '</svg><div class="dleg">' + leg + '</div></div>';
+}
+function profitOfRecord(r) {
+  const it = r.itemId ? itemById(r.itemId) : null;
+  return r.amount - (r.fee || 0) - (r.shipping || 0) - (it ? costOf(it) : 0);
+}
+function anResultsHtml() {
+  const q = normNo(anState.q);
+  if (!q) return "";
+  const words = q.split(/\s+/).filter(Boolean);
+  const match = (text) => { const h = normNo(text); return words.every((w) => h.indexOf(w) >= 0); };
+  const hits = records.filter((r) => {
+    if (r.type !== "sales" || !inPeriod(r.date)) return false;
+    const it = r.itemId ? itemById(r.itemId) : null;
+    return match([r.memo, r.site, r.shipMethod, r.date, it ? it.name : "", it ? it.no : ""].join(" "));
+  }).sort((a, b) => (a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : a.date < b.date ? 1 : -1));
+  const shown = hits.slice(0, 100);
+  const sumS = hits.reduce((a, r) => a + r.amount, 0), sumP = hits.reduce((a, r) => a + profitOfRecord(r), 0);
+  let html = '<div class="sec-title"><span>売れた商品（' + periodLabel() + '・' + hits.length + '件）</span></div>';
+  if (!hits.length) html += '<div class="card empty">該当する売上はありません。</div>';
+  else {
+    html += '<div class="tbl-wrap"><table class="t" style="font-size:13px"><thead><tr><th>日付</th><th>商品</th><th class="r">売値</th><th class="r">純利益</th></tr></thead><tbody>' +
+      shown.map((r) => {
+        const it = r.itemId ? itemById(r.itemId) : null, p = profitOfRecord(r), d = r.date.split("-");
+        const attr = it ? 'data-item="' + esc(it.id) + '"' : 'data-edit="' + esc(r.id) + '"';
+        return '<tr ' + attr + '><td>' + parseInt(d[1], 10) + '/' + parseInt(d[2], 10) + '</td><td><div class="nm">' + esc(it ? it.name : (r.memo || "（商品番号なし）")) + '</div><div class="no">' + esc([it ? it.no : "", r.site || "", r.shipMethod || ""].filter(Boolean).join("・")) + '</div></td>' +
+          '<td class="r">' + yen(r.amount) + '</td><td class="r ' + (p < 0 ? "" : "") + '" style="color:' + (p < 0 ? "var(--danger)" : "var(--sales)") + '">' + sy(p) + '</td></tr>';
+      }).join("") +
+      '<tr style="cursor:default"><td colspan="2"><b>合計</b></td><td class="r">' + yen(sumS) + '</td><td class="r">' + sy(sumP) + '</td></tr></tbody></table></div>' +
+      (hits.length > 100 ? '<p class="note" style="margin-top:8px">新しい100件を表示しています。</p>' : '');
+  }
+  const stock = items.filter((i) => i.status === "stock" && match(i.name + " " + i.no)).sort((a, b) => (a.no < b.no ? -1 : 1)).slice(0, 20);
+  if (stock.length) html += '<div class="sec-title" style="margin-top:14px"><span>在庫にある商品（' + stock.length + '点）</span></div>' + itemTable(stock);
+  return html;
+}
+function renderAnalytics() {
+  const list = records.filter((r) => inPeriod(r.date)), t = sums(list);
+  const bySite = {}, byShip = {};
+  list.forEach((r) => {
+    if (r.type !== "sales") return;
+    const a = r.site || "指定なし", b = r.shipMethod || "指定なし";
+    bySite[a] = (bySite[a] || 0) + r.amount;
+    byShip[b] = (byShip[b] || 0) + 1;
+  });
+  let purchase = 0;
+  const byCat = {};
+  list.forEach((r) => {
+    if (r.type !== "expense") return;
+    if (r.lotId) { purchase += r.amount; return; }
+    const c = r.category || "その他";
+    byCat[c] = (byCat[c] || 0) + r.amount;
+  });
+  const cost = [{ name: "仕入れ", value: purchase }]
+    .concat(EXPENSE_CATS.map((c) => ({ name: c, value: byCat[c] || 0 })))
+    .concat(Object.keys(byCat).filter((c) => EXPENSE_CATS.indexOf(c) < 0).map((c) => ({ name: c, value: byCat[c] })))
+    .concat([{ name: "販売手数料", value: t.f }, { name: "送料", value: t.h }]);
+  const soldItems = items.filter((i) => i.status === "sold" && inPeriod(i.soldDate)).map((i) => ({ it: i, p: i.price - (i.fee || 0) - (i.shipping || 0) - costOf(i) })).sort((a, b) => b.p - a.p).slice(0, 5);
+  const maxP = Math.max.apply(null, [1].concat(soldItems.map((x) => Math.abs(x.p))));
+  const rank = soldItems.length ? soldItems.map((x) => '<div class="rk" data-item="' + esc(x.it.id) + '"><div class="rk-top"><span class="nm2">' + esc(x.it.name) + '</span><b style="color:' + (x.p < 0 ? "var(--danger)" : "var(--sales)") + '">' + sy(x.p) + '</b></div><div class="rk-bar"><div style="width:' + Math.max(3, Math.round(Math.abs(x.p) / maxP * 100)) + '%;background:' + (x.p < 0 ? "var(--danger)" : "var(--sales)") + '"></div></div></div>').join("") : '<div class="empty" style="padding:18px 8px">この期間に売れた商品はありません。</div>';
+  app.innerHTML =
+    '<header class="top"><h2 class="title" style="margin:0">分析</h2></header>' +
+    '<input class="field" id="an-q" type="search" placeholder="発送方法・商品名で探す" value="' + esc(anState.q) + '" style="height:50px;margin-bottom:10px">' +
+    '<div id="an-results" style="margin-bottom:12px">' + anResultsHtml() + '</div>' +
+    '<select class="field" id="an-period" style="height:48px;margin-bottom:12px"><option value="month"' + (anState.period === "month" ? " selected" : "") + '>今月</option><option value="year"' + (anState.period === "year" ? " selected" : "") + '>年間（今年）</option><option value="all"' + (anState.period === "all" ? " selected" : "") + '>全期間</option></select>' +
+    '<div class="pair"><div class="card"><div class="k"><span class="dot s"></span>売上（' + periodLabel() + '）</div><div class="v">' + yen(t.s) + '</div></div>' +
+    '<div class="card"><div class="k">純利益（' + periodLabel() + '）</div><div class="v' + (t.b < 0 ? ' neg' : '') + '">' + sy(t.b) + '</div></div></div>' +
+    '<div class="card an-card"><h3 class="an-title">月別の売上と純利益</h3><div class="lgd"><span><i style="background:var(--sales)"></i>売上</span><span><i style="background:var(--expense)"></i>純利益</span><span class="sub">直近12か月</span></div>' + monthlyChart() + '</div>' +
+    '<div class="card an-card"><h3 class="an-title">販売サイト別の売上</h3>' + donutHtml(Object.keys(bySite).map((k) => ({ name: k, value: bySite[k] })), yen, "この期間の売上はありません。") + '</div>' +
+    '<div class="card an-card"><h3 class="an-title">発送方法別の件数</h3>' + donutHtml(Object.keys(byShip).map((k) => ({ name: k, value: byShip[k] })), (v) => v + "件", "この期間の売上はありません。") + '</div>' +
+    '<div class="card an-card"><h3 class="an-title">費用の内訳</h3>' + donutHtml(cost, yen, "この期間の費用はありません。") + '</div>' +
+    '<div class="card an-card"><h3 class="an-title">利益の多い商品 上位5</h3>' + rank + '</div>';
+}
+app.addEventListener("input", (e) => {
+  if (e.target.id !== "an-q") return;
+  anState.q = e.target.value;
+  const box = $("an-results");
+  if (box) box.innerHTML = anResultsHtml();
+});
+app.addEventListener("change", (e) => {
+  if (e.target.id === "an-period") { anState.period = e.target.value; render(true); }
+});
+
+/* PARSE-BEGIN */
+function parseTrade(raw) {
+  const nz = (x) => String(x == null ? "" : x).normalize("NFKC");
+  const rawLines = nz(raw).split(/\r?\n/).map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => l.length);
+  const cmp = rawLines.map((l) => l.replace(/\s+/g, ""));
+  const out = { price: null, fee: null, ship: null, profit: null, method: "", shipper: "", date: "", orderId: "", title: "", site: "", check: "unverified", notes: [] };
+  const AMT = /(\d{1,3}(?:[,.]\d{3})+|\d+)/;
+  const toNum = (s) => parseInt(String(s).replace(/[,.]/g, ""), 10);
+  const grab = (re, negRe) => {
+    for (let i = 0; i < cmp.length; i++) {
+      const m = re.exec(cmp[i]);
+      if (!m) continue;
+      const rest = cmp[i].slice(m.index + m[0].length);
+      if (negRe && negRe.test(rest)) continue;
+      let a = AMT.exec(rest);
+      if (!a && cmp[i + 1]) a = /^[¥Y羊半]?(\d{1,3}(?:[,.]\d{3})+|\d+)$/.exec(cmp[i + 1]);
+      if (a) return { v: toNum(a[1]), i: i };
+    }
+    return null;
+  };
+  const p = grab(/商品代金|販売価格|商品金額|売上金額|落札価格|落札金額/);
+  const f = grab(/販売手数料|システム利用料|手数料/);
+  const s = grab(/配送料|発送料|送料/, /^(込|無料|別|は|負担)/);
+  const pr = grab(/販売利益|売上金|受取金額|お受け取り金額|利益/);
+  if (p) out.price = p.v; if (f) out.fee = f.v; if (s) out.ship = s.v; if (pr) out.profit = pr.v;
+
+  // positional fallback: consecutive amount lines a - b - c = d
+  const amts = [];
+  cmp.forEach((l, i) => {
+    const m = /(?:[¥Y羊半])?(\d{1,3}(?:[,.]\d{3})+|\d{2,7})$/.exec(l);
+    if (m && (/[¥Y羊半]/.test(l) || /,/.test(m[1]) || /[¥]/.test(rawLines[i]))) amts.push({ v: toNum(m[1]), i: i });
+  });
+  const okEq = out.price != null && out.fee != null && out.ship != null && out.profit != null && out.price - out.fee - out.ship === out.profit;
+  if (!okEq) {
+    for (let k = 0; k + 3 < amts.length; k++) {
+      const [a, b, c, d] = [amts[k].v, amts[k + 1].v, amts[k + 2].v, amts[k + 3].v];
+      if (a - b - c === d && a > 0) { out.price = a; out.fee = b; out.ship = c; out.profit = d; out.notes.push("位置から読み取り"); break; }
+    }
+  }
+  // validation / repair
+  const eq = (a, b, c, d) => a - b - c === d;
+  if (out.price != null && out.fee != null && out.ship != null && out.profit != null) {
+    if (eq(out.price, out.fee, out.ship, out.profit)) out.check = "ok";
+    else {
+      const orig = [out.price, out.fee, out.ship, out.profit];
+      const strip = (n) => { const t = String(n); return t.length >= 2 ? parseInt(t.slice(1), 10) : n; };
+      const sameHead = orig.every((n) => String(n).length >= 2 && String(n)[0] === String(orig[0])[0]);
+      const all = orig.map(strip);
+      let best = null;
+      if (sameHead && eq(all[0], all[1], all[2], all[3])) best = all;   // ¥ misread as the same digit on every line
+      if (!best) {
+        const alt = (n) => { const t = String(n); return t.length >= 2 ? [n, parseInt(t.slice(1), 10)] : [n]; };
+        const sols = [];
+        alt(orig[0]).forEach((a) => alt(orig[1]).forEach((b) => alt(orig[2]).forEach((c) => alt(orig[3]).forEach((d) => { if (eq(a, b, c, d)) sols.push([a, b, c, d]); }))));
+        sols.sort((x, y) => x.filter((v, i) => v !== orig[i]).length - y.filter((v, i) => v !== orig[i]).length);
+        if (sols.length) best = sols[0];
+      }
+      if (best) { out.price = best[0]; out.fee = best[1]; out.ship = best[2]; out.profit = best[3]; out.check = "repaired"; }
+      else out.check = "mismatch";
+    }
+  } else if (out.price != null && out.fee != null && out.ship == null && out.profit != null && out.price - out.fee - out.profit >= 0) { out.ship = out.price - out.fee - out.profit; out.check = "derived"; }
+  else if (out.price != null && out.ship != null && out.fee == null && out.profit != null && out.price - out.ship - out.profit >= 0) { out.fee = out.price - out.ship - out.profit; out.check = "derived"; }
+  else if (out.fee != null && out.ship != null && out.price == null && out.profit != null) { out.price = out.fee + out.ship + out.profit; out.check = "derived"; }
+
+  // shipping method / payer
+  for (let i = 0; i < cmp.length; i++) {
+    const m = /配送の方法|配送方法|発送方法/.exec(cmp[i]);
+    if (m) {
+      let rest = cmp[i].slice(m.index + m[0].length).replace(/^[:：]+/, "").replace(/コピー$/, "");
+      if (!rest && rawLines[i + 1]) rest = rawLines[i + 1].replace(/\s+/g, "");
+      rest = rest.replace(/[|｜>＞〉]+$/, "").slice(0, 20);
+      if (rest && !/^(送料|購入日時|商品ID)/.test(rest)) { out.method = rest; break; }
+    }
+  }
+  const pay = /(出品者負担|購入者負担|着払い|元払い)/.exec(cmp.join(" "));
+  if (pay) out.shipper = pay[1];
+
+  // date
+  const dm = /(20\d{2})\s*[年\/\-.]\s*(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})(?!\d)/.exec(rawLines.join(" "));
+  if (dm) { const mo = +dm[2], da = +dm[3]; if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) out.date = dm[1] + "-" + String(mo).padStart(2, "0") + "-" + String(da).padStart(2, "0"); }
+
+  // order id
+  const joined = cmp.join(" ");
+  let im = /([mM]\d{9,})/.exec(joined);
+  if (im) out.orderId = "m" + im[1].slice(1);
+  else { im = /(?:商品ID|取引ID|注文番号|注文ID|ID)[:：]?([A-Za-z0-9\-]{9,})/.exec(joined); if (im) out.orderId = im[1]; }
+
+  // site
+  if (/メルカリ/.test(joined) || /^m\d{9,}$/.test(out.orderId)) out.site = "メルカリ";
+  else if (/ヤフオク|Yahoo!?オークション/i.test(joined)) out.site = "ヤフオク";
+  else if (/ラクマ/.test(joined)) out.site = "ラクマ";
+  else if (/PayPayフリマ|ペイペイフリマ/.test(joined)) out.site = "PayPayフリマ";
+  else if (/Amazon/i.test(joined)) out.site = "Amazon";
+
+  // title: lines between 取引情報 and the first price label
+  const isLabel = (l) => /商品代金|販売価格|商品金額|売上金額|落札価格|落札金額/.test(l);
+  let first = cmp.findIndex(isLabel);
+  if (first >= 0) {
+    let start = cmp.findIndex((l) => /取引情報/.test(l));
+    if (start < 0 || start >= first) start = Math.max(-1, first - 3);
+    const parts = [];
+    for (let i = start + 1; i < first; i++) {
+      const l = rawLines[i];
+      if (/取引情報|コピー|^[>＞〉|｜\s]+$/.test(l)) continue;
+      parts.push(l.replace(/[>＞〉|｜]+$/, "").trim());
+    }
+    out.title = parts.join(" ").replace(/\s+/g, " ").trim().slice(0, 100);
+  }
+  return out;
+}
+function bigrams(t) {
+  const s = String(t || "").normalize("NFKC").toLowerCase().replace(/[\s\-_/・,.()（）「」【】\[\]!！?？]+/g, "");
+  const set = new Set();
+  if (s.length === 1) set.add(s);
+  for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2));
+  return set;
+}
+function similarity(a, b) {
+  const A = bigrams(a), B = bigrams(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0; A.forEach((x) => { if (B.has(x)) inter++; });
+  return inter / Math.min(A.size, B.size) * 0.6 + inter / (A.size + B.size - inter) * 0.4;
+}
+/* PARSE-END */
+
+/* ---------- photos + trade-screenshot import ---------- */
+function fileToImage(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(new Error("read"));
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => res({ img: img, url: fr.result });
+      img.onerror = () => rej(new Error("decode"));
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function scaledCanvas(img, maxSide) {
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height, k = Math.min(1, maxSide / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+async function compressPhoto(file) {
+  const r = await fileToImage(file);
+  return { full: scaledCanvas(r.img, 480).toDataURL("image/jpeg", 0.65), thumb: scaledCanvas(r.img, 80).toDataURL("image/jpeg", 0.55) };
+}
+function ocrCanvas(img) {
+  const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+  const k = w0 < 1400 ? 2 : 1;
+  const c = document.createElement("canvas");
+  c.width = Math.round(Math.min(w0 * k, 2600)); c.height = Math.round(h0 * (c.width / w0));
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, 0, 0, c.width, c.height);
+  const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+  let sum = 0;
+  for (let i = 0; i < a.length; i += 4) { const y = 0.299 * a[i] + 0.587 * a[i + 1] + 0.114 * a[i + 2]; a[i] = y; sum += y; }
+  const dark = sum / (a.length / 4) < 128;
+  for (let i = 0; i < a.length; i += 4) { let y = a[i]; if (dark) y = 255 - y; const v = y > 140 ? 255 : 0; a[i] = a[i + 1] = a[i + 2] = v; a[i + 3] = 255; }
+  g.putImageData(d, 0, 0);
+  return c;
+}
+function cropTradeThumb(img) {
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  const x = Math.round(w * 0.03), y = Math.round(h * 0.28), cw = Math.round(w * 0.19), ch = Math.round(h * 0.12);
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, cw); c.height = Math.max(1, ch);
+  c.getContext("2d").drawImage(img, x, y, cw, ch, 0, 0, c.width, c.height);
+  return c;
+}
+function imgHash(source) {
+  const c = document.createElement("canvas");
+  c.width = 8; c.height = 8;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(source, 0, 0, 8, 8);
+  const d = g.getImageData(0, 0, 8, 8).data, gray = [];
+  for (let i = 0; i < 64; i++) { const o = i * 4; gray.push(0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2]); }
+  const avg = gray.reduce((a, b) => a + b, 0) / 64;
+  return gray.map((v) => (v >= avg ? 1 : 0));
+}
+function hammingDist(a, b) {
+  let d = 0;
+  for (let i = 0; i < 64; i++) if (a[i] !== b[i]) d++;
+  return d;
+}
+function hashFromDataUrl(durl) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => { try { res(imgHash(img)); } catch (e) { res(null); } };
+    img.onerror = () => res(null);
+    img.src = durl;
+  });
+}
+async function matchByPhoto(queryCanvas, title) {
+  const textCands = computeCands(title);
+  let qh = null;
+  try { qh = imgHash(queryCanvas); } catch (e) {}
+  let imgCands = [];
+  if (qh) {
+    const pool = stockItems().filter((i) => i.thumb);
+    const hashed = await Promise.all(pool.map(async (i) => ({ it: i, h: await hashFromDataUrl(i.thumb) })));
+    imgCands = hashed.filter((x) => x.h).map((x) => ({ it: x.it, dist: hammingDist(qh, x.h) }))
+      .filter((x) => x.dist <= 28).sort((a, b) => a.dist - b.dist).slice(0, 3);
+  }
+  const seen = new Set(imgCands.map((x) => x.it.id));
+  const merged = imgCands.slice();
+  textCands.forEach((x) => { if (merged.length < 3 && !seen.has(x.it.id)) { merged.push(x); seen.add(x.it.id); } });
+  return { merged: merged, imgTop: imgCands[0] || null, imgRunner: imgCands[1] || null };
+}
+let tessPromise = null;
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (tessPromise) return tessPromise;
+  tessPromise = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    sc.onload = () => res(window.Tesseract);
+    sc.onerror = () => { tessPromise = null; rej(new Error("load")); };
+    document.head.appendChild(sc);
+  });
+  return tessPromise;
+}
+async function runOcr(canvas, onProgress) {
+  const T = await loadTesseract();
+  const worker = await T.createWorker("jpn", 1, {
+    langPath: "https://tessdata.projectnaptha.com/4.0.0_fast",
+    logger: (m) => { if (m && typeof m.progress === "number") onProgress(m.status || "", m.progress); }
+  });
+  try {
+    await worker.setParameters({ tessedit_pageseg_mode: (T.PSM && T.PSM.SINGLE_BLOCK) || "6" });
+    const r = await worker.recognize(canvas);
+    return (r && r.data && r.data.text) || "";
+  } finally { try { await worker.terminate(); } catch (e) {} }
+}
+function setOcrMsg(html, kind) {
+  state.ocrHtml = html ? '<div class="ocrmsg ' + (kind || "") + '">' + html + '</div>' : "";
+  const box = $("f-ocr");
+  if (box) box.innerHTML = state.ocrHtml;
+}
+function computeCands(title) {
+  if (!title) return [];
+  return stockItems().map((it) => ({ it: it, sc: similarity(title, it.name) })).filter((x) => x.sc >= 0.25).sort((a, b) => b.sc - a.sc).slice(0, 3);
+}
+const thumbImg = (it) => (it && it.thumb ? '<img class="th" src="' + esc(it.thumb) + '" alt="">' : "");
+function candsHtml(c) {
+  if (!c.length) return "";
+  return '<div class="note" style="margin:0 4px 6px">この商品ではありませんか？（押すと商品番号が入ります）</div><div class="cands">' +
+    c.map((x) => '<button class="cand" data-cand="' + esc(x.it.no) + '">' + thumbImg(x.it) + '<span><b>' + esc(x.it.no) + '</b> ' + esc(x.it.name) + '</span></button>').join("") + '</div>';
+}
+function applyTrade(t, text, candInfo, queryThumbUrl) {
+  const got = [];
+  const vals = {};
+  if (t.date) { vals["f-date"] = t.date; got.push("日付"); }
+  if (t.price != null) { vals["f-amt"] = t.price.toLocaleString("ja-JP"); got.push("売値"); }
+  if (t.fee != null) { vals["f-fee"] = t.fee.toLocaleString("ja-JP"); got.push("手数料"); }
+  if (t.ship != null) { vals["f-ship"] = t.ship.toLocaleString("ja-JP"); got.push("送料"); }
+  if (t.title && !val("f-memo").trim()) { vals["f-memo"] = t.title; got.push("メモ（商品名）"); }
+  const over = { vals: vals };
+  if (t.method) { const has = shipMethods().indexOf(t.method) >= 0; over.shipSel = has ? t.method : "__other"; if (!has) vals["f-shipm-o"] = t.method; got.push("発送方法"); }
+  if (t.site) { const has = siteNames().indexOf(t.site) >= 0; over.siteSel = has ? t.site : "__other"; if (!has) vals["f-site-o"] = t.site; got.push("販売サイト"); }
+  state.tradeId = t.orderId || "";
+  if (t.orderId) got.push("取引ID");
+  const ci = candInfo || { merged: computeCands(t.title), imgTop: null, imgRunner: null };
+  let matchedByPhoto = false;
+  if (ci.imgTop && ci.imgTop.dist <= 10 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 6)) { vals["f-no"] = ci.imgTop.it.no; matchedByPhoto = true; }
+  else {
+    const tc = computeCands(t.title);
+    if (tc.length && tc[0].sc >= 0.55 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) vals["f-no"] = tc[0].it.no;
+  }
+  state.candsHtml = candsHtml(ci.merged);
+  let msg;
+  if (!got.length && !ci.merged.length) msg = "読み取れた項目がありません。別の画像にするか、手で入力してください。";
+  else {
+    msg = got.length ? "<b>自動で入りました：</b>" + got.join("、") + "。<br>内容を確認してから、記録してください。" : "<b>金額などは読み取れませんでした。</b>内容を確認してから、記録してください。";
+    if (t.check === "ok") msg += "<br>金額の計算が合っています（売値−手数料−送料＝販売利益）。";
+    else if (t.check === "repaired") msg += "<br>数字を一部補正しました。金額を確認してください。";
+    else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
+    else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
+    if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
+    if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
+  }
+  if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
+  if (queryThumbUrl) msg += '<div class="qthumb"><img src="' + esc(queryThumbUrl) + '" alt=""><span>商品の写真として、ここを比べました</span></div>';
+  msg += '<details><summary>読み取った文字を見る</summary><pre>' + esc(text) + '</pre></details>';
+  state.ocrHtml = '<div class="ocrmsg ' + ((got.length || ci.merged.length) ? "ok" : "err") + '">' + msg + '</div>';
+  keepAndRender(over);
+}
+async function handleTradeImage(file) {
+  if (!file) return;
+  setOcrMsg("画像を読み取っています…（初回は、文字データの読み込みで、少し時間がかかります）", "busy");
+  try {
+    const r = await fileToImage(file);
+    const text = await runOcr(ocrCanvas(r.img), (st, p) => setOcrMsg("画像を読み取っています… " + Math.round(p * 100) + "%", "busy"));
+    setOcrMsg("写真を見比べています…", "busy");
+    const thumbC = cropTradeThumb(r.img);
+    const cands = await matchByPhoto(thumbC, parseTrade(text).title);
+    applyTrade(parseTrade(text), text, cands, thumbC.toDataURL("image/jpeg", 0.7));
+  } catch (e) {
+    setOcrMsg("読み取れませんでした。通信を確認するか、手で入力してください。", "err");
+  }
+}
+document.addEventListener("paste", (e) => {
+  if (state.view !== "add" || state.type !== "sales" || state.editId) return;
+  const list = e.clipboardData && e.clipboardData.items;
+  if (!list) return;
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].type && list[i].type.indexOf("image/") === 0) { const f = list[i].getAsFile(); if (f) { e.preventDefault(); handleTradeImage(f); } return; }
+  }
+});
 
 /* ---------- events ---------- */
 $("dock").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b || !me) return;
-  if (b.dataset.view === "add") { state.editId = null; state.type = "sales"; }
+  if (b.dataset.view === "add") { state.editId = null; state.type = "sales"; state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = ""; }
   go(b.dataset.view);
 });
 
 function openEdit(id) {
-  state.editId = id;
   const er = records.filter((r) => r.id === id)[0];
+  if (er && er.itemId && itemById(er.itemId)) { sheetItem(er.itemId); return; }
+  state.editId = id;
   if (er) state.type = er.type;
   state.view = "add"; render();
 }
 
 app.addEventListener("click", (e) => {
+  if (invClick(e)) return;
   const tr = e.target.closest("tr[data-edit]");
   if (tr) { openEdit(tr.dataset.edit); return; }
   const t = e.target.closest("button"); if (!t) return;
@@ -734,10 +2084,8 @@ app.addEventListener("click", (e) => {
   if (t.dataset.act === "prev") { state.month = shiftMonth(state.month, -1); render(); return; }
   if (t.dataset.act === "next") { state.month = shiftMonth(state.month, 1); render(); return; }
   if (t.dataset.type) {
-    const keep = { d: val("f-date"), a: val("f-amt"), m: val("f-memo") };
     state.type = t.dataset.type;
-    renderAdd();
-    $("f-date").value = keep.d; $("f-amt").value = keep.a; $("f-memo").value = keep.m;
+    keepAndRender();
     return;
   }
   if (t.id === "save") { doSave(); return; }
@@ -754,9 +2102,36 @@ app.addEventListener("input", (e) => {
   }
 });
 
+sheet.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.dataset && t.dataset.sp === "name" && supDraft) supDraft[+t.dataset.i].name = t.value;
+  if (t.dataset && t.dataset.sd && siteDraft) {
+    const i = +t.dataset.i, f = t.dataset.sd;
+    if (f === "rate") t.value = toHalf(t.value).replace(/[^0-9.]/g, "");
+    if (f === "fixed") t.value = digits(t.value);
+    siteDraft[i][f] = t.value;
+  }
+});
+sheet.addEventListener("change", (e) => {
+  const t0 = e.target;
+  if (t0.dataset && t0.dataset.iphoto && t0.files && t0.files[0]) {
+    const id = t0.dataset.iphoto;
+    compressPhoto(t0.files[0]).then(async (ph) => {
+      const ref = doc(collection(db, "photos")), batch = writeBatch(db);
+      batch.set(ref, { data: ph.full, createdAt: Date.now() });
+      batch.update(doc(db, "items", id), { thumb: ph.thumb, photoId: ref.id });
+      const ok = await safe(batch.commit());
+      toast(ok ? "写真を保存しました" : "写真を保存できませんでした");
+      const el = $("ph-img"); if (ok && el) el.src = ph.full;
+    }, () => toast("写真を読み込めませんでした"));
+    return;
+  }
+  if (e.target.dataset && e.target.dataset.sp === "mode" && supDraft) supDraft[+e.target.dataset.i].mode = e.target.value;
+});
 sheet.addEventListener("click", async (e) => {
   const b = e.target.closest("button"); if (!b || !b.dataset.s) return;
   const a = b.dataset.s;
+  if (await invSheet(b)) return;
   if (a === "close") closeSheet();
   else if (a === "menu") sheetMenu();
   else if (a === "pw") sheetPw();
@@ -802,9 +2177,8 @@ sheet.addEventListener("click", async (e) => {
   }
   else if (a === "b-restore") doRestore();
   else if (a === "pr-now") {
-    $("printarea").innerHTML = "<style>" + PRINT_CSS + "</style>" + printBody(state.month);
     closeSheet();
-    setTimeout(() => { try { window.print(); } catch (x) {} }, 150);
+    openPrintWindow(printBody(state.month), monthLabel(state.month));
   }
 });
 
