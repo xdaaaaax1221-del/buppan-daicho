@@ -1916,10 +1916,11 @@ async function compressPhoto(file) {
 }
 function ocrCanvas(img) {
   const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
-  // iPhoneのスクリーンショットなど、すでに文字がくっきりしている画像を無駄に2倍拡大しない（速度優先）
-  const k = w0 < 900 ? 2 : 1;
+  // iPhoneのスクリーンショット（だいたい750〜1300px幅）はしっかり2倍拡大して数字を読み取りやすくする。
+  // カメラの元画像など、すでに十分大きい画像だけ、無駄な拡大をしない（速度優先）
+  const k = w0 < 1300 ? 2 : 1;
   const c = document.createElement("canvas");
-  c.width = Math.round(Math.min(w0 * k, 1800)); c.height = Math.round(h0 * (c.width / w0));
+  c.width = Math.round(Math.min(w0 * k, 2200)); c.height = Math.round(h0 * (c.width / w0));
   const g = c.getContext("2d", { willReadFrequently: true });
   g.drawImage(img, 0, 0, c.width, c.height);
   const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
