@@ -739,9 +739,9 @@ async function doSave() {
     p = setDoc(doc(collection(db, "records")), data);
   }
   let done = false, failed = false;
-  p.then(() => { done = true; }, () => { failed = true; toast("保存できませんでした"); });
+  p.then(() => { done = true; }, (e) => { failed = true; window.__lastErr = e; toast("保存できませんでした"); });
   await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
-  if (failed) { btn.disabled = false; err.textContent = "保存できませんでした。通信や権限を確認してください。"; return; }
+  if (failed) { btn.disabled = false; err.textContent = "保存できませんでした。通信や権限を確認してください。" + errSuffix(); return; }
   state.month = date.slice(0, 7);
   state.editId = null;
   state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = "";
@@ -1083,11 +1083,17 @@ function nextLotSeq() {
 }
 const lotLabel = (seq) => "ロットNo." + seq;
 const lotPrefix = (l) => (l && typeof l.seq === "number" ? "L" + l.seq : (l && l.no) || "");
+window.__lastErr = null;
 async function safe(p) {
   let failed = false, done = false;
-  p.then(() => { done = true; }).catch(() => { failed = true; done = true; });
+  p.then(() => { done = true; }).catch((e) => { failed = true; done = true; window.__lastErr = e; });
   await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 20000))]);
   return done ? !failed : false;
+}
+function errSuffix() {
+  const e = window.__lastErr;
+  if (!e) return "";
+  return "［詳細：" + (e.code || e.name || "") + (e.message ? " " + String(e.message).slice(0, 120) : "") + "］";
 }
 
 function itemRow(i) {
@@ -1320,7 +1326,7 @@ async function saveLot(closeAfter) {
   const btn = document.querySelector('[data-act="savelot"]');
   if (btn) btn.disabled = true;
   const ok = await safe(commitOps(ops));
-  if (!ok) { if (btn) btn.disabled = false; err.textContent = "登録できませんでした。通信や権限を確認してください。"; return; }
+  if (!ok) { if (btn) btn.disabled = false; err.textContent = "登録できませんでした。通信や権限を確認してください。" + errSuffix(); return; }
   inv.draft = null; inv.filter = "stock"; inv.q = "";
   toast(no + (closeAfter ? " を登録して、終了しました" : " に登録しました") + (expenseAmount ? "。経費 " + yen(expenseAmount) + " を計上" : ""));
   go("stock");
@@ -1333,7 +1339,7 @@ async function closeLotOnly(btn) {
   const ops = closeOps(ex, null);
   ops.push(["update", doc(db, "lots", ex.id), { status: "closed", closedDate: today() }]);
   const ok = await safe(commitOps(ops));
-  if (!ok) { err.textContent = "終了できませんでした。通信や権限を確認してください。"; return; }
+  if (!ok) { err.textContent = "終了できませんでした。通信や権限を確認してください。" + errSuffix(); return; }
   inv.draft = null;
   toast(ex.no + " を終了しました");
   go("stock");
