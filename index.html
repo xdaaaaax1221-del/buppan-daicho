@@ -917,6 +917,7 @@ function printBody(m) {
 const siteById = (id) => sites.filter((x) => x.id === id)[0];
 const siteByName = (n) => sites.filter((x) => x.name === n)[0];
 const normNo = (x) => String(x == null ? "" : x).normalize("NFKC").trim().toLowerCase();
+const cmpNo = (a, b) => { const x = String(a == null ? "" : a), y = String(b == null ? "" : b); return x.localeCompare(y, "ja", { numeric: true, sensitivity: "base" }); };
 const findItemByNo = (no) => { const k = normNo(no); if (!k) return undefined; const list = items.filter((i) => normNo(i.no) === k); if (!list.length) return undefined; return list.filter((i) => i.status === "stock")[0] || list[list.length - 1]; };
 function shipMethods() {
   const cnt = {};
@@ -1052,7 +1053,7 @@ function costOf(i) {
 }
 const isProvisional = (i) => { const lot = lots.filter((l) => l.id === i.lotId)[0]; return !!(lot && lot.mode === "lot" && lot.status === "open"); };
 const openLots = () => lots.filter((l) => l.status === "open").sort((a, b) => ((b.seq || 0) - (a.seq || 0)) || ((b.createdAt || 0) - (a.createdAt || 0)));
-const lotItems = (lotId) => items.filter((x) => x.lotId === lotId).sort((a, b) => ((a.createdAt || 0) - (b.createdAt || 0)) || (a.no < b.no ? -1 : 1));
+const lotItems = (lotId) => items.filter((x) => x.lotId === lotId).sort((a, b) => ((a.createdAt || 0) - (b.createdAt || 0)) || cmpNo(a.no, b.no));
 async function commitOps(ops) {
   for (let i = 0; i < ops.length; i += 400) {
     const batch = writeBatch(db);
@@ -1116,7 +1117,7 @@ function renderStock() {
     if (f !== "all" && i.status !== f) return false;
     if (q && (i.name + " " + i.no).toLowerCase().indexOf(q) < 0) return false;
     return true;
-  }).sort((a, b) => (a.no < b.no ? 1 : -1));
+  }).sort((a, b) => cmpNo(b.no, a.no));
   const stock = stockItems();
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">在庫</h2><div class="sub">' + stock.length + '点・' + yen(sumOf(stock, costOf)) + '</div></header>' +
@@ -1361,7 +1362,7 @@ function renderCount() {
   }
   const checked = c.checked || {};
   const done = stock.filter((i) => checked[i.id]).length, total = stock.length;
-  const list = stock.slice().sort((a, b) => (a.no < b.no ? -1 : 1));
+  const list = stock.slice().sort((a, b) => cmpNo(a.no, b.no));
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">棚卸し中</h2><div class="sub">確認 ' + done + ' / ' + total + '</div></header>' +
     '<p class="note">' + esc(c.by || "") + 'さんが ' + esc(c.start || "") + ' に開始</p>' +
@@ -1513,7 +1514,7 @@ function openPrintWindow(bodyHtml, title) {
   toast("印刷用の画面を開けませんでした。別タブが開ける設定か確認してください。");
 }
 function printStock() {
-  const list = stockItems().sort((a, b) => (a.no < b.no ? -1 : 1));
+  const list = stockItems().sort((a, b) => cmpNo(a.no, b.no));
   const now = new Date();
   const rows = list.map((i) => '<tr><td class="c">' + esc(i.no) + '</td><td>' + esc(i.name) + '</td><td class="r">' + yen(costOf(i)) + '</td><td class="c" style="width:16mm">□</td></tr>').join("") || '<tr><td colspan="4" style="text-align:center">在庫はありません</td></tr>';
   const body = '<div class="p-h"><b>物販台帳　棚卸表</b><span>出力日 ' + now.getFullYear() + '/' + (now.getMonth() + 1) + '/' + now.getDate() + '</span></div>' +
@@ -1698,7 +1699,7 @@ function anResultsHtml() {
       '<tr style="cursor:default"><td colspan="2"><b>合計</b></td><td class="r">' + yen(sumS) + '</td><td class="r">' + sy(sumP) + '</td></tr></tbody></table></div>' +
       (hits.length > 100 ? '<p class="note" style="margin-top:8px">新しい100件を表示しています。</p>' : '');
   }
-  const stock = items.filter((i) => i.status === "stock" && match(i.name + " " + i.no)).sort((a, b) => (a.no < b.no ? -1 : 1)).slice(0, 20);
+  const stock = items.filter((i) => i.status === "stock" && match(i.name + " " + i.no)).sort((a, b) => cmpNo(a.no, b.no)).slice(0, 20);
   if (stock.length) html += '<div class="sec-title" style="margin-top:14px"><span>在庫にある商品（' + stock.length + '点）</span></div>' + itemTable(stock);
   return html;
 }
