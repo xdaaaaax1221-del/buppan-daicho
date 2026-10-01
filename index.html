@@ -1377,7 +1377,7 @@ function sheetItem(id) {
   const it = itemById(id);
   if (!it) return;
   const lot = lotOf(it);
-  let h = '<h3>' + esc(it.name) + '</h3><p class="note">' + esc(it.no) + '</p>' +
+  let h = '<h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px">' + esc(it.name) + '<button class="pbtn" data-s="itemedit" data-id="' + esc(it.id) + '" style="flex:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>編集</button></h3><p class="note">' + esc(it.no) + '</p>' +
     '<div class="phbox">' + (it.thumb || it.photoId ? '<img id="ph-img" alt="" src="' + esc(it.thumb || "") + '">' : '<div class="noph">写真はありません</div>') +
     '<label class="pbtn" style="margin-top:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>' + (it.thumb ? "写真を変える" : "写真を追加") + '<input type="file" accept="image/*" data-iphoto="' + esc(it.id) + '" hidden></label></div>' +
     (lot.mode === "lot" ? '<div class="kv"><span>ロット</span><span>' + esc(lot.no || "－") + '</span></div>' : '') +
@@ -1408,6 +1408,24 @@ function sheetItem(id) {
   if (it.photoId) getDoc(doc(db, "photos", it.photoId)).then((sn) => { const el = $("ph-img"); if (el && sn.exists() && sn.data().data) el.src = sn.data().data; }, () => {});
 }
 
+function sheetItemEdit(id) {
+  const it = itemById(id);
+  if (!it) return;
+  const lot = lotOf(it);
+  const provisional = isProvisional(it);
+  openSheet('<h3>商品を編集</h3>' +
+    '<label class="f" for="ie-name">商品名</label><input class="field" id="ie-name" type="text" maxlength="60" value="' + esc(it.name) + '">' +
+    '<label class="f" for="ie-no">商品番号</label><input class="field" id="ie-no" type="text" maxlength="40" autocomplete="off" autocapitalize="none" value="' + esc(it.no) + '">' +
+    (provisional
+      ? '<p class="note">仕入れ値は、ロット計算のため、ここでは直せません（ロットを終了すると確定します）。</p>'
+      : '<label class="f" for="ie-cost">仕入れ値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-cost" type="text" inputmode="numeric" value="' + Number(it.cost || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>') +
+    '<label class="f" for="ie-date">仕入れた日</label><input class="field" id="ie-date" type="date" value="' + esc(lot.date || today()) + '">' +
+    (lot.id ? '<p class="note">日付を変えると、同じロット（' + esc(lot.no || "") + '）の他の商品の日付も一緒に変わります。</p>' : '') +
+    '<div class="err" id="ie-err"></div>' +
+    '<button class="primary" data-s="item-save" data-id="' + esc(it.id) + '">保存する</button>' +
+    '<button class="ghost" data-s="itemcancel" data-id="' + esc(it.id) + '">戻る</button>', "itemedit");
+}
+
 function sheetFinish() {
   const c = countState; if (!c || !c.active) return;
   const checked = c.checked || {}, stock = stockItems();
@@ -1427,6 +1445,34 @@ function sheetFinish() {
 
 async function invSheet(b) {
   const a = b.dataset.s;
+  if (a === "itemedit") { sheetItemEdit(b.dataset.id); return true; }
+  if (a === "itemcancel") { sheetItem(b.dataset.id); return true; }
+  if (a === "item-save") {
+    const it = itemById(b.dataset.id);
+    if (!it) { closeSheet(); return true; }
+    const err = $("ie-err"), name = val("ie-name").trim().slice(0, 60), no = val("ie-no").trim().slice(0, 40), dateV = val("ie-date");
+    err.textContent = "";
+    if (!name) { err.textContent = "商品名を入れてください。"; return true; }
+    if (!no) { err.textContent = "商品番号を入れてください。"; return true; }
+    const dupe = items.some((x) => x.id !== it.id && normNo(x.no) === normNo(no));
+    if (dupe) { err.textContent = "この商品番号は、すでに他の商品で使われています。"; return true; }
+    if (!dateV) { err.textContent = "日付を選んでください。"; return true; }
+    const provisional = isProvisional(it);
+    let cost = it.cost;
+    if (!provisional) {
+      cost = numOf(val("ie-cost"));
+      if (isNaN(cost) || cost < 0) { err.textContent = "仕入れ値を入れてください。"; return true; }
+    }
+    const lot = lotOf(it);
+    const batch = writeBatch(db);
+    batch.update(doc(db, "items", it.id), { name: name, no: no, cost: cost });
+    if (lot.id && lot.date !== dateV) batch.update(doc(db, "lots", lot.id), { date: dateV });
+    const ok = await safe(batch.commit());
+    if (!ok) { err.textContent = "保存できませんでした。通信や権限を確認してください。" + errSuffix(); return true; }
+    toast("保存しました");
+    sheetItem(it.id);
+    return true;
+  }
   if (a === "suppliers") { supDraft = null; sheetSuppliers(); return true; }
   if (a === "sup-add") { supDraft.push({ id: "p" + Math.random().toString(36).slice(2, 8), name: "", mode: "item" }); sheetSuppliers(); return true; }
   if (a === "sup-rm") { supDraft.splice(+b.dataset.i, 1); sheetSuppliers(); return true; }
@@ -2151,6 +2197,7 @@ app.addEventListener("input", (e) => {
 
 sheet.addEventListener("input", (e) => {
   const t = e.target;
+  if (t.id === "ie-cost") { t.value = fmtNum(t.value); return; }
   if (t.dataset && t.dataset.sp === "name" && supDraft) supDraft[+t.dataset.i].name = t.value;
   if (t.dataset && t.dataset.sd && siteDraft) {
     const i = +t.dataset.i, f = t.dataset.sd;
