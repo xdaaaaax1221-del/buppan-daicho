@@ -2,8 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>物販台帳</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1427,6 +1426,8 @@ function sheetItemEdit(id) {
   if (!it) return;
   const lot = lotOf(it);
   const provisional = isProvisional(it);
+  const sold = it.status === "sold";
+  const lost = it.status === "lost";
   openSheet('<h3>商品を編集</h3>' +
     '<label class="f" for="ie-name">商品名</label><input class="field" id="ie-name" type="text" maxlength="60" value="' + esc(it.name) + '">' +
     '<label class="f" for="ie-no">商品番号</label><input class="field" id="ie-no" type="text" maxlength="40" autocomplete="off" autocapitalize="none" value="' + esc(it.no) + '">' +
@@ -1435,6 +1436,13 @@ function sheetItemEdit(id) {
       : '<label class="f" for="ie-cost">仕入れ値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-cost" type="text" inputmode="numeric" value="' + Number(it.cost || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>') +
     '<label class="f" for="ie-date">仕入れた日</label><input class="field" id="ie-date" type="date" value="' + esc(lot.date || today()) + '">' +
     (lot.id ? '<p class="note">日付を変えると、同じロット（' + esc(lot.no || "") + '）の他の商品の日付も一緒に変わります。</p>' : '') +
+    (sold ? '<label class="f" for="ie-price">売値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-price" type="text" inputmode="numeric" value="' + Number(it.price || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
+      '<label class="f" for="ie-site">販売サイト</label><input class="field" id="ie-site" type="text" maxlength="20" value="' + esc(it.site || "") + '">' +
+      '<label class="f" for="ie-fee">手数料（円）</label><div class="money"><span>¥</span><input class="field" id="ie-fee" type="text" inputmode="numeric" value="' + Number(it.fee || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
+      '<label class="f" for="ie-ship">送料（円）</label><div class="money"><span>¥</span><input class="field" id="ie-ship" type="text" inputmode="numeric" value="' + Number(it.shipping || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
+      '<label class="f" for="ie-solddate">売れた日</label><input class="field" id="ie-solddate" type="date" value="' + esc(it.soldDate || today()) + '">' : '') +
+    (lost ? '<label class="f" for="ie-reason">理由</label><select class="field" id="ie-reason"><option' + (it.reason === "紛失" ? " selected" : "") + '>紛失</option><option' + (it.reason === "破損" ? " selected" : "") + '>破損</option><option' + (it.reason === "その他" || !["紛失","破損"].includes(it.reason) ? " selected" : "") + '>その他</option></select>' +
+      '<label class="f" for="ie-lostdate">外した日</label><input class="field" id="ie-lostdate" type="date" value="' + esc(it.lostDate || today()) + '">' : '') +
     '<div class="err" id="ie-err"></div>' +
     '<button class="primary" data-s="item-save" data-id="' + esc(it.id) + '">保存する</button>' +
     '<button class="ghost" data-s="itemcancel" data-id="' + esc(it.id) + '">戻る</button>', "itemedit");
@@ -1477,10 +1485,28 @@ async function invSheet(b) {
       cost = numOf(val("ie-cost"));
       if (isNaN(cost) || cost < 0) { err.textContent = "仕入れ値を入れてください。"; return true; }
     }
+    const itemUpdate = { name: name, no: no, cost: cost };
+    const sold = it.status === "sold";
+    const lost = it.status === "lost";
+    let recordUpdate = null;
+    if (sold) {
+      const price = numOf(val("ie-price")), fee = numOf(val("ie-fee")), ship = numOf(val("ie-ship")), site = val("ie-site").trim().slice(0, 20), soldDate = val("ie-solddate");
+      if (isNaN(price) || price <= 0) { err.textContent = "売値を入れてください。"; return true; }
+      const f0 = isNaN(fee) ? 0 : fee, h0 = isNaN(ship) ? 0 : ship;
+      if (f0 > price) { err.textContent = "手数料が、売値より大きくなっています。"; return true; }
+      if (!soldDate) { err.textContent = "売れた日を選んでください。"; return true; }
+      itemUpdate.price = price; itemUpdate.fee = f0; itemUpdate.shipping = h0; itemUpdate.site = site; itemUpdate.soldDate = soldDate;
+      recordUpdate = { amount: price, fee: f0, shipping: h0, site: site, date: soldDate };
+    } else if (lost) {
+      const reason = val("ie-reason"), lostDate = val("ie-lostdate");
+      if (!lostDate) { err.textContent = "外した日を選んでください。"; return true; }
+      itemUpdate.reason = reason; itemUpdate.lostDate = lostDate;
+    }
     const lot = lotOf(it);
     const batch = writeBatch(db);
-    batch.update(doc(db, "items", it.id), { name: name, no: no, cost: cost });
+    batch.update(doc(db, "items", it.id), itemUpdate);
     if (lot.id && lot.date !== dateV) batch.update(doc(db, "lots", lot.id), { date: dateV });
+    if (recordUpdate && it.recordId) batch.update(doc(db, "records", it.recordId), recordUpdate);
     const ok = await safe(batch.commit());
     if (!ok) { err.textContent = "保存できませんでした。通信や権限を確認してください。" + errSuffix(); return true; }
     toast("保存しました");
@@ -2211,6 +2237,7 @@ app.addEventListener("input", (e) => {
 sheet.addEventListener("input", (e) => {
   const t = e.target;
   if (t.id === "ie-cost") { t.value = fmtNum(t.value); return; }
+  if (t.id === "ie-price" || t.id === "ie-fee" || t.id === "ie-ship") { t.value = fmtNum(t.value); return; }
   if (t.dataset && t.dataset.sp === "name" && supDraft) supDraft[+t.dataset.i].name = t.value;
   if (t.dataset && t.dataset.sd && siteDraft) {
     const i = +t.dataset.i, f = t.dataset.sd;
