@@ -1397,6 +1397,7 @@ function sheetItem(id) {
     '<div class="kv"><span>仕入れ値</span><span>' + yen(costOf(it)) + (isProvisional(it) ? '（見込み・ロット終了で確定）' : '') + '</span></div>' +
     '<div class="kv"><span>仕入れた日</span><span>' + esc(lot.date || "－") + '</span></div>' +
     '<div class="kv"><span>仕入れ先</span><span>' + esc(lot.supplier || "－") + '</span></div>' +
+    (lot.memo ? '<div class="kv"><span>メモ</span><span>' + esc(lot.memo) + '</span></div>' : '') +
     (lot.mode ? '<div class="kv"><span>仕入れ値の計算</span><span>' + modeName(lot.mode) + (lot.mode === "lot" ? '（ロット ' + yen(lot.total || 0) + '）' : '') + '</span></div>' : '');
   if (it.status === "stock") {
     h += '<p class="note" style="margin-top:16px">売れたときは、「記録する」の売上で、この商品番号を入れます。</p>' +
@@ -1428,14 +1429,24 @@ function sheetItemEdit(id) {
   const provisional = isProvisional(it);
   const sold = it.status === "sold";
   const lost = it.status === "lost";
+  const isLotMode = !!(lot.id && lot.mode === "lot");
+  const sibs = lot.id ? lotItems(lot.id).length : 0;
   openSheet('<h3>商品を編集</h3>' +
     '<label class="f" for="ie-name">商品名</label><input class="field" id="ie-name" type="text" maxlength="60" value="' + esc(it.name) + '">' +
     '<label class="f" for="ie-no">商品番号</label><input class="field" id="ie-no" type="text" maxlength="40" autocomplete="off" autocapitalize="none" value="' + esc(it.no) + '">' +
-    (provisional
-      ? '<p class="note">仕入れ値は、ロット計算のため、ここでは直せません（ロットを終了すると確定します）。</p>'
-      : '<label class="f" for="ie-cost">仕入れ値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-cost" type="text" inputmode="numeric" value="' + Number(it.cost || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>') +
+    (provisional ? ''
+      : '<label class="f" for="ie-cost">仕入れ値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-cost" type="text" inputmode="numeric" value="' + Number(it.cost || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
+        (lot.id && !isLotMode ? '<p class="note">仕入れ値を変えると、経費の金額も一緒に変わります。</p>' : '')) +
+    (isLotMode
+      ? '<label class="f" for="ie-lottotal">ロットの金額（円）</label><div class="money"><span>¥</span><input class="field" id="ie-lottotal" type="text" inputmode="numeric" value="' + Number(lot.total || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
+        '<p class="note">まとめて払った金額です。変えると、' + esc(lot.no || "ロット") + 'の全商品（' + sibs + '点）の仕入れ値が割り直され、経費の金額も一緒に変わります。' + (provisional ? 'いまは1点あたり約 ' + yen(costOf(it)) + ' です。' : '') + '</p>'
+      : '') +
     '<label class="f" for="ie-date">仕入れた日</label><input class="field" id="ie-date" type="date" value="' + esc(lot.date || today()) + '">' +
-    (lot.id ? '<p class="note">日付を変えると、同じロット（' + esc(lot.no || "") + '）の他の商品の日付も一緒に変わります。</p>' : '') +
+    (lot.id
+      ? '<label class="f" for="ie-sup">仕入れ先</label><input class="field" id="ie-sup" type="text" maxlength="20" list="ie-suplist" value="' + esc(lot.supplier || "") + '"><datalist id="ie-suplist">' + supplierList().map((x) => '<option value="' + esc(x.name) + '"></option>').join("") + '</datalist>' +
+        '<label class="f" for="ie-memo">メモ（任意）</label><input class="field" id="ie-memo" type="text" maxlength="60" value="' + esc(lot.memo || "") + '">' +
+        (sibs > 1 ? '<p class="note">仕入れた日・仕入れ先・メモを変えると、' + (isLotMode ? '同じロット（' + esc(lot.no || "") + '）の' : '一緒に登録した') + '他の商品も一緒に変わります。</p>' : '')
+      : '') +
     (sold ? '<label class="f" for="ie-price">売値（円）</label><div class="money"><span>¥</span><input class="field" id="ie-price" type="text" inputmode="numeric" value="' + Number(it.price || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
       '<label class="f" for="ie-site">販売サイト</label><input class="field" id="ie-site" type="text" maxlength="20" value="' + esc(it.site || "") + '">' +
       '<label class="f" for="ie-fee">手数料（円）</label><div class="money"><span>¥</span><input class="field" id="ie-fee" type="text" inputmode="numeric" value="' + Number(it.fee || 0).toLocaleString("ja-JP") + '" style="margin-bottom:8px"></div>' +
@@ -1480,10 +1491,24 @@ async function invSheet(b) {
     if (dupe) { err.textContent = "この商品番号は、すでに他の商品で使われています。"; return true; }
     if (!dateV) { err.textContent = "日付を選んでください。"; return true; }
     const provisional = isProvisional(it);
+    const lot = lotOf(it);
+    const isLotMode = !!(lot.id && lot.mode === "lot");
     let cost = it.cost;
     if (!provisional) {
       cost = numOf(val("ie-cost"));
       if (isNaN(cost) || cost < 0) { err.textContent = "仕入れ値を入れてください。"; return true; }
+    }
+    let newTotal = null;
+    if (isLotMode) {
+      newTotal = numOf(val("ie-lottotal"));
+      if (isNaN(newTotal)) { err.textContent = "ロットの金額を入れてください。"; return true; }
+    }
+    if (cost >= 10000000000 || (newTotal !== null && newTotal >= 10000000000)) { err.textContent = "金額が大きすぎます。"; return true; }
+    let sup = lot.supplier || "", lmemo = lot.memo || "";
+    if (lot.id) {
+      sup = val("ie-sup").trim().slice(0, 20);
+      lmemo = val("ie-memo").trim().slice(0, 60);
+      if (!sup && lot.supplier) { err.textContent = "仕入れ先を入れてください。"; return true; }
     }
     const itemUpdate = { name: name, no: no, cost: cost };
     const sold = it.status === "sold";
@@ -1502,12 +1527,52 @@ async function invSheet(b) {
       if (!lostDate) { err.textContent = "外した日を選んでください。"; return true; }
       itemUpdate.reason = reason; itemUpdate.lostDate = lostDate;
     }
-    const lot = lotOf(it);
-    const batch = writeBatch(db);
-    batch.update(doc(db, "items", it.id), itemUpdate);
-    if (lot.id && lot.date !== dateV) batch.update(doc(db, "lots", lot.id), { date: dateV });
-    if (recordUpdate && it.recordId) batch.update(doc(db, "records", it.recordId), recordUpdate);
-    const ok = await safe(batch.commit());
+    const ops = [], lotUpdate = {}, recUp = {};
+    const rset = (rid, k, v) => { (recUp[rid] = recUp[rid] || {})[k] = v; };
+    if (recordUpdate && it.recordId) recUp[it.recordId] = recordUpdate;
+    if (lot.id) {
+      const oldTotal = lot.total || 0;
+      let delta = 0;
+      if (isLotMode && newTotal !== oldTotal) {
+        delta = newTotal - oldTotal; lotUpdate.total = newTotal;
+        if (lot.status !== "open") {
+          const li = lotItems(lot.id), per = splitCost(newTotal, li.length);
+          li.forEach((x, k) => {
+            if (x.id === it.id) itemUpdate.cost = per[k];
+            else if (x.cost !== per[k]) ops.push(["update", doc(db, "items", x.id), { cost: per[k] }]);
+          });
+        }
+      } else if (!isLotMode && cost !== (it.cost || 0)) {
+        delta = cost - (it.cost || 0); lotUpdate.total = Math.max(0, oldTotal + delta);
+      }
+      if (lot.date !== dateV) lotUpdate.date = dateV;
+      if ((lot.supplier || "") !== sup) lotUpdate.supplier = sup;
+      if ((lot.memo || "") !== lmemo) lotUpdate.memo = lmemo;
+      const mainRec = lot.recordId ? records.filter((r) => r.id === lot.recordId)[0] : null;
+      let gone = "";
+      if (delta) {
+        if (mainRec) {
+          const na = (mainRec.amount || 0) + delta;
+          if (na > 0) rset(mainRec.id, "amount", na);
+          else { ops.push(["delete", doc(db, "records", mainRec.id)]); lotUpdate.recordId = ""; gone = mainRec.id; }
+        } else if (!lot.recordId && delta > 0) {
+          const nr = doc(collection(db, "records"));
+          ops.push(["set", nr, { type: "expense", date: dateV, amount: delta, memo: (isLotMode ? "仕入れ " + (lot.no || "") + "（" + sup + "）" : "仕入れ（" + sup + "）").slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), lotId: lot.id }]);
+          lotUpdate.recordId = nr.id;
+        }
+      }
+      if (lotUpdate.date && mainRec && mainRec.date === lot.date) rset(mainRec.id, "date", dateV);
+      if (lotUpdate.supplier !== undefined && lot.supplier) {
+        records.forEach((r) => {
+          if (r.lotId === lot.id && r.type === "expense" && typeof r.memo === "string" && r.memo.indexOf("（" + lot.supplier) >= 0) rset(r.id, "memo", r.memo.replace("（" + lot.supplier, "（" + sup).slice(0, 100));
+        });
+      }
+      if (gone) delete recUp[gone];
+      if (Object.keys(lotUpdate).length) ops.push(["update", doc(db, "lots", lot.id), lotUpdate]);
+    }
+    ops.push(["update", doc(db, "items", it.id), itemUpdate]);
+    Object.keys(recUp).forEach((rid) => ops.push(["update", doc(db, "records", rid), recUp[rid]]));
+    const ok = await safe(commitOps(ops));
     if (!ok) { err.textContent = "保存できませんでした。通信や権限を確認してください。" + errSuffix(); return true; }
     toast("保存しました");
     sheetItem(it.id);
@@ -2236,7 +2301,7 @@ app.addEventListener("input", (e) => {
 
 sheet.addEventListener("input", (e) => {
   const t = e.target;
-  if (t.id === "ie-cost") { t.value = fmtNum(t.value); return; }
+  if (t.id === "ie-cost" || t.id === "ie-lottotal") { t.value = fmtNum(t.value); return; }
   if (t.id === "ie-price" || t.id === "ie-fee" || t.id === "ie-ship") { t.value = fmtNum(t.value); return; }
   if (t.dataset && t.dataset.sp === "name" && supDraft) supDraft[+t.dataset.i].name = t.value;
   if (t.dataset && t.dataset.sd && siteDraft) {
