@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -233,6 +233,7 @@ table.t .r.s { color: var(--sales); } table.t .r.e { color: var(--expense); }
 .note { color: var(--muted); font-size: 13px; margin: 0 4px 12px; }
 .seg.c3 { grid-template-columns: repeat(3, 1fr); }
 .seg.c3 button { height: 46px; font-size: 15px; }
+.seg.c3 button[aria-pressed="true"] { background: var(--sales); color: var(--sales-ink); }
 .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .gbtn { height: 50px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
 .ghost.n { color: var(--text); }
@@ -722,7 +723,13 @@ async function doSave() {
     if (it.status === "sold") { err.textContent = "この商品は、すでに販売済みです。"; return; }
     if (it.status === "lost") { err.textContent = "この商品は、在庫から外れています。在庫の画面で「在庫に戻す」を押してください。"; return; }
   }
-  const btn = $("save"); btn.disabled = true;
+  const btn = $("save");
+  if (isS && !wasEdit && !itemNo && !btn.dataset.sure) {
+    btn.dataset.sure = "1";
+    err.textContent = "商品番号が入っていません。このまま記録すると、在庫（点数）からは引かれません。よろしければ、もう一度「記録する」を押してください。";
+    return;
+  }
+  btn.disabled = true;
   let p;
   if (it) {
     const rref = doc(collection(db, "records")), batch = writeBatch(db);
@@ -987,7 +994,13 @@ function updateSaleHints() {
   if (!v) { hint.textContent = ""; hint.className = "hint"; return; }
   const it = findItemByNo(v);
   if (!it) { hint.textContent = "この商品番号は登録されていません。"; hint.className = "hint ng"; }
-  else if (it.status === "stock") { hint.innerHTML = thumbImg(it) + "✓ " + esc(it.name) + "（仕入れ値 " + yen(costOf(it)) + (isProvisional(it) ? "・見込み" : "") + "）"; hint.className = "hint ok"; return; }
+  else if (it.status === "stock") {
+    hint.innerHTML = thumbImg(it) + "✓ " + esc(it.name) + "（仕入れ値 " + yen(costOf(it)) + (isProvisional(it) ? "・見込み" : "") + "）";
+    hint.className = "hint ok";
+    const memoEl = $("f-memo");
+    if (memoEl && !memoEl.value.trim()) memoEl.value = it.name;
+    return;
+  }
   else if (it.status === "sold") { hint.textContent = "この商品は、すでに販売済みです。"; hint.className = "hint ng"; }
   else { hint.textContent = "この商品は、在庫から外れています。"; hint.className = "hint ng"; }
 }
