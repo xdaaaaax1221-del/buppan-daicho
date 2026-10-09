@@ -1169,13 +1169,18 @@ function nextLotDisplayNo() {
   // 番号だけ消費してしまい、「2個目のつもりが3になる」ズレの原因になっていたため。
   // displayNoを持たない既存のロット（この直し以前に作られたもの）は、以前の表示
   // 番号（＝seq）をそのまま引き継いで数える（すでに見えている番号と衝突させないため）。
-  let max = 0;
+  // 番号は「保存されているロット名（ロットNo.N）」を正とし、使われていない最小の番号を返す
+  // （例：No.1とNo.3がある時は2、次は4）。名前から読めない場合のみdisplayNo／seqで代用する。
+  const used = new Set();
   lots.forEach((l) => {
     if (l.mode !== "lot") return;
-    const n = typeof l.displayNo === "number" ? l.displayNo : l.seq;
-    if (typeof n === "number" && n > max) max = n;
+    const m = /^ロットNo\.(\d+)$/.exec(String(l.no || ""));
+    const n = m ? parseInt(m[1], 10) : (typeof l.displayNo === "number" ? l.displayNo : l.seq);
+    if (typeof n === "number") used.add(n);
   });
-  return max + 1;
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
 }
 const lotLabel = (n) => "ロットNo." + n;
 const lotPrefix = (l) => (l && typeof l.seq === "number" ? "L" + l.seq : (l && l.no) || "");
