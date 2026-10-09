@@ -400,6 +400,12 @@ function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
 }
+
+/* ---------- unsent draft（保存が確定する前に離れた新規の記録を、端末に残す） ---------- */
+const DRAFT_KEY = "buppan-unsent-draft-v1";
+function saveDraftToDisk(d) { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign({ savedAt: Date.now() }, d))); } catch (e) {} }
+function loadDraftFromDisk() { try { const r = localStorage.getItem(DRAFT_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function clearDraftFromDisk() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
 function openSheet(html, kind) { sheet.innerHTML = html; sheetKind = kind || ""; scrim.classList.add("open"); }
 function closeSheet() { scrim.classList.remove("open"); sheet.innerHTML = ""; sheetKind = ""; usersPending = null; }
 scrim.addEventListener("click", (e) => { if (e.target === scrim) closeSheet(); });
@@ -614,6 +620,11 @@ function renderAdd() {
   state.prefillNo = "";
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">' + (rec ? "記録を修正" : "新しい記録") + '</h2></header>' +
+    (!rec && state.pendingDraft ? '<div class="card" style="margin-bottom:14px;padding:12px 14px">' +
+      '<div class="nm" style="margin-bottom:6px">送れていない下書きがあります</div>' +
+      '<p class="note" style="margin:0 0 10px">' + esc(state.pendingDraft.type === "sales" ? "売上" : "経費") + '・' + esc(state.pendingDraft.date || "") + (state.pendingDraft.amt ? "・" + esc(state.pendingDraft.amt) + "円" : "") + '</p>' +
+      '<button class="gbtn" data-act="draft-load" style="width:100%;margin-bottom:8px">下書きを読み込む</button>' +
+      '<button class="ghost" data-act="draft-discard" style="margin-top:0">この下書きを消す</button></div>' : '') +
     '<div class="seg" role="group" aria-label="項目">' +
     '<button class="s" data-type="sales" aria-pressed="' + isS + '">売上</button>' +
     '<button class="e" data-type="expense" aria-pressed="' + !isS + '">経費</button></div>' +
@@ -643,7 +654,7 @@ function renderAdd() {
     '<input class="field" id="f-memo" type="text" maxlength="100" placeholder="例：商品名・お客様名" value="' + (rec ? esc(rec.memo || "") : "") + '">' +
     '<div class="err" id="err"></div>' +
     '<button class="primary' + (isS ? '' : ' e') + '" id="save">' + (rec ? "保存する" : "記録する") + '</button>' +
-    (rec ? '<button class="ghost" id="del">この記録を削除</button>' : '');
+    (rec ? '<button class="ghost" id="del">' + (rec.itemId ? "返品・キャンセル（売上を取り消して在庫に戻す）" : "この記録を削除") + '</button>' : '');
 }
 
 function render(keepScroll) {
@@ -738,32 +749,87 @@ async function doSave() {
     p = batch.commit();
   } else if (wasEdit) {
     const data = { type: state.type, date: date, amount: amount, memo: memo, site: isS ? siteName : "", fee: isS ? fee : 0, shipping: isS ? ship : 0, shipMethod: isS ? shipm : "", category: isS ? "" : category };
-    p = setDoc(doc(db, "records", state.editId), data, { merge: true });
+    if (old && old.itemId) {
+      // 在庫の商品とひも付いた売上を修正：記録と、商品側に保存された金額を、同時に合わせる
+      const batch = writeBatch(db);
+      batch.set(doc(db, "records", state.editId), data, { merge: true });
+      if (isS) batch.update(doc(db, "items", old.itemId), { price: amount, soldDate: date, site: siteName, fee: fee, shipping: ship, shipMethod: shipm });
+      else batch.update(doc(db, "items", old.itemId), { status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, shipMethod: "" });
+      p = batch.commit();
+    } else {
+      p = setDoc(doc(db, "records", state.editId), data, { merge: true });
+    }
   } else {
     const data = { type: state.type, date: date, amount: amount, memo: memo, by: me.name, uid: me.uid, createdAt: Date.now() };
     if (isS) { data.site = siteName; data.fee = fee; data.shipping = ship; data.shipMethod = shipm; if (tradeId) data.orderId = tradeId; }
     else data.category = category;
     p = setDoc(doc(collection(db, "records")), data);
   }
-  let done = false, failed = false;
-  p.then(() => { done = true; }, (e) => { failed = true; window.__lastErr = e; toast("保存できませんでした"); });
-  await Promise.race([p.catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
-  if (failed) { btn.disabled = false; err.textContent = "保存できませんでした。通信や権限を確認してください。" + errSuffix(); return; }
+  btn.textContent = "保存中…";
+  let failedErr = null, settled = false;
+  p.then(() => { settled = true; }, (e) => { settled = true; failedErr = e; window.__lastErr = e; });
+  // 新規の記録だけ、万一の通信待ちに備えて今の入力内容を控えておく（確定したら消す）
+  const draftSnap = (!wasEdit && isS)
+    ? { type: state.type, date: date, amt: val("f-amt"), memo: val("f-memo"), site: val("f-site"), siteO: val("f-site-o"), shipm: val("f-shipm"), shipmO: val("f-shipm-o"), fee: val("f-fee"), ship: val("f-ship"), no: val("f-no") }
+    : (!wasEdit ? { type: state.type, date: date, amt: val("f-amt"), memo: val("f-memo"), cat: val("f-cat") } : null);
+  let laterBtn = null;
+  const laterTimer = setTimeout(() => {
+    if (settled || !err) return;
+    err.textContent = "通信待ちです。電波の良いところでそのままお待ちいただくか、下の「あとで送る」で今の内容を端末に残して離れられます。";
+    if (draftSnap && !laterBtn) {
+      laterBtn = document.createElement("button");
+      laterBtn.type = "button"; laterBtn.className = "ghost"; laterBtn.textContent = "あとで送る（下書きとして残す）";
+      laterBtn.addEventListener("click", () => {
+        saveDraftToDisk(draftSnap);
+        toast("下書きとして端末に残しました。通信が戻ったら、また記録してください。");
+        go("home");
+      });
+      err.insertAdjacentElement("afterend", laterBtn);
+    }
+  }, 5000);
+  await p.catch(() => {});
+  clearTimeout(laterTimer);
+  if (laterBtn && laterBtn.parentNode) laterBtn.parentNode.removeChild(laterBtn);
+  if (failedErr) {
+    btn.disabled = false; btn.textContent = wasEdit ? "保存する" : "記録する";
+    if (err) err.textContent = "保存できませんでした。通信や権限を確認してやり直してください。" + errSuffix();
+    return;
+  }
   state.month = date.slice(0, 7);
   state.editId = null;
   state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = "";
+  clearDraftFromDisk();
   const extra = isS && (fee || ship) ? "（" + [fee ? "手数料 " + yen(fee) : "", ship ? "送料 " + yen(ship) : ""].filter(Boolean).join("・") + "）" : "";
-  toast(done ? (wasEdit ? "保存しました" : (it ? "記録して、在庫から外しました" : "記録しました") + extra) : "通信待ちです。つながると自動で保存されます");
+  toast(wasEdit ? "保存しました" : (it ? "記録して、在庫から外しました" : "記録しました") + extra);
   go("home");
 }
 
 async function doDelete(btn) {
   if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "もう一度押すと削除します"; return; }
   const id = state.editId;
+  const rec = records.filter((r) => r.id === id)[0];
+  btn.disabled = true; btn.textContent = "削除中…";
+  const err = $("err");
+  const waitTimer = setTimeout(() => { if (err) err.textContent = "通信待ちです。電波の良いところで、そのままお待ちください。"; }, 5000);
   try {
-    await Promise.race([deleteDoc(doc(db, "records", id)), new Promise((r) => setTimeout(r, 5000))]);
-  } catch (e) { toast("削除できませんでした"); return; }
-  state.editId = null; toast("削除しました"); go("history");
+    if (rec && rec.itemId) {
+      // 在庫の商品とひも付いた売上の削除（＝返品・キャンセル）：
+      // 記録を消すのと同時に、商品も在庫に戻す
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "records", id));
+      batch.update(doc(db, "items", rec.itemId), { status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, shipMethod: "" });
+      await batch.commit();
+    } else {
+      await deleteDoc(doc(db, "records", id));
+    }
+  } catch (e) {
+    clearTimeout(waitTimer);
+    btn.disabled = false; btn.textContent = "もう一度押すと削除します";
+    if (err) err.textContent = "削除できませんでした。通信や権限を確認してやり直してください。" + errSuffix();
+    return;
+  }
+  clearTimeout(waitTimer);
+  state.editId = null; toast(rec && rec.itemId ? "売上を取り消して、在庫に戻しました" : "削除しました"); go("history");
 }
 
 /* ---------- settings sheets ---------- */
@@ -865,7 +931,7 @@ async function doRestore() {
     }
   });
   (Array.isArray(d.lots) ? d.lots : []).forEach((l) => {
-    if (l && typeof l.no === "string" && isDate(l.date)) ops.push(["lots", idOf("lots", l), { no: S(l.no, 30), seq: (typeof l.seq === "number" && l.seq > 0 ? Math.round(l.seq) : null), date: l.date, supplier: S(l.supplier, 40), mode: l.mode === "lot" ? "lot" : (l.mode === "item" ? "item" : ""), total: Math.max(0, Math.round(Number(l.total) || 0)), status: l.status === "open" ? "open" : "closed", closedDate: S(l.closedDate, 10), memo: S(l.memo, 60), by: l.by ? S(l.by, 30) : "バックアップ", createdAt: l.createdAt || Date.now(), recordId: S(l.recordId, 60) }]);
+    if (l && typeof l.no === "string" && isDate(l.date)) ops.push(["lots", idOf("lots", l), { no: S(l.no, 30), seq: (typeof l.seq === "number" && l.seq > 0 ? Math.round(l.seq) : null), displayNo: (typeof l.displayNo === "number" && l.displayNo > 0 ? Math.round(l.displayNo) : null), date: l.date, supplier: S(l.supplier, 40), mode: l.mode === "lot" ? "lot" : (l.mode === "item" ? "item" : ""), total: Math.max(0, Math.round(Number(l.total) || 0)), status: l.status === "open" ? "open" : "closed", closedDate: S(l.closedDate, 10), memo: S(l.memo, 60), by: l.by ? S(l.by, 30) : "バックアップ", createdAt: l.createdAt || Date.now(), recordId: S(l.recordId, 60) }]);
   });
   (Array.isArray(d.items) ? d.items : []).forEach((i) => {
     if (i && typeof i.name === "string" && i.name && typeof i.cost === "number" && (i.status === "stock" || i.status === "sold" || i.status === "lost")) {
@@ -1091,11 +1157,27 @@ const sumOf = (list, f) => list.reduce((a, i) => a + f(i), 0);
 const lotOf = (it) => lots.filter((l) => l.id === it.lotId)[0] || { no: "", date: "", supplier: "", memo: "" };
 const itemById = (id) => items.filter((i) => i.id === id)[0];
 function nextLotSeq() {
+  // 商品番号の接頭辞（L5-001など）を一意にするための内部の通し番号。
+  // 「その他」の一発仕入れも1件としてロット記録を作るため、ここは全ロット対象のまま。
   let max = 0;
   lots.forEach((l) => { if (typeof l.seq === "number" && l.seq > max) max = l.seq; });
   return max + 1;
 }
-const lotLabel = (seq) => "ロットNo." + seq;
+function nextLotDisplayNo() {
+  // 画面に見せる「ロットNo.」はロット計算（mode==="lot"）のものだけを数える。
+  // 「その他」の一発仕入れ（mode==="item"）は画面上「ロット」として見えないのに
+  // 番号だけ消費してしまい、「2個目のつもりが3になる」ズレの原因になっていたため。
+  // displayNoを持たない既存のロット（この直し以前に作られたもの）は、以前の表示
+  // 番号（＝seq）をそのまま引き継いで数える（すでに見えている番号と衝突させないため）。
+  let max = 0;
+  lots.forEach((l) => {
+    if (l.mode !== "lot") return;
+    const n = typeof l.displayNo === "number" ? l.displayNo : l.seq;
+    if (typeof n === "number" && n > max) max = n;
+  });
+  return max + 1;
+}
+const lotLabel = (n) => "ロットNo." + n;
 const lotPrefix = (l) => (l && typeof l.seq === "number" ? "L" + l.seq : (l && l.no) || "");
 window.__lastErr = null;
 async function safe(p) {
@@ -1124,21 +1206,32 @@ function itemTable(list) {
   return '<div class="tbl-wrap"><table class="t"><thead><tr><th>商品</th><th style="text-align:right">金額</th><th>状態</th></tr></thead><tbody>' + list.map(itemRow).join("") + '</tbody></table></div>';
 }
 
-function renderStock() {
+function stockFilteredList() {
   const f = inv.filter, q = inv.q.trim().toLowerCase();
-  const list = items.filter((i) => {
+  return items.filter((i) => {
     if (f !== "all" && i.status !== f) return false;
     if (q && (i.name + " " + i.no).toLowerCase().indexOf(q) < 0) return false;
     return true;
   }).sort((a, b) => cmpNo(b.no, a.no));
+}
+function renderStock() {
+  const f = inv.filter;
   const stock = stockItems();
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">在庫</h2><div class="sub">' + stock.length + '点・' + yen(sumOf(stock, costOf)) + '</div></header>' +
     '<div class="acts"><button class="gbtn" data-act="lotadd">＋ 仕入れを登録</button><button class="gbtn" data-act="tocount">棚卸し' + (countState && countState.active ? "（中）" : "") + '</button></div>' +
     '<div class="seg c3"><button data-f="stock" aria-pressed="' + (f === "stock") + '">在庫あり</button><button data-f="sold" aria-pressed="' + (f === "sold") + '">販売済</button><button data-f="lost" aria-pressed="' + (f === "lost") + '">外した</button></div>' +
     '<input class="field" id="q" type="search" placeholder="商品名・管理番号で探す" value="' + esc(inv.q) + '" style="height:48px;margin-bottom:12px">' +
-    itemTable(list) +
+    '<div id="stock-results">' + itemTable(stockFilteredList()) + '</div>' +
     (stock.length ? '<p style="text-align:center"><button class="link" data-act="printstock">棚卸表を印刷（A4）</button></p>' : '');
+}
+function renderStockResults() {
+  // 検索欄に打つたびに画面全体（検索欄そのものを含む）を作り直すと、
+  // IME・フリック入力の変換状態が壊れて文字化けの原因になるため、
+  // 結果一覧だけを差し替える（検索欄のDOM要素には一切触れない）
+  const box = $("stock-results");
+  if (!box) return;
+  box.innerHTML = itemTable(stockFilteredList());
 }
 
 function draftPointCount(d) { return d.rows.reduce((a, r) => { const q = numOf(r.qty); return a + (isNaN(q) ? 0 : q); }, 0); }
@@ -1238,7 +1331,7 @@ function renderLotAdd() {
     '<p class="note">商品番号は、自動で順番に入ります。個数が2以上のときは、続けて番号がつきます。</p>' +
     '<button class="gbtn" data-act="addrow" style="margin:0 0 16px;width:100%">＋ 商品を追加</button>' +
     '<div class="err" id="err"></div>' +
-    (singleStep ? '' : '<p class="note" id="lotno">' + esc(ex ? ex.no : lotLabel(nextLotSeq())) + (ex ? '' : '（新規ロットの番号は、自動でつきます）') + '</p>') +
+    (singleStep ? '' : '<p class="note" id="lotno">' + esc(ex ? ex.no : lotLabel(nextLotDisplayNo())) + (ex ? '' : '（新規ロットの番号は、自動でつきます）') + '</p>') +
     '<p class="note" id="lottotal">' + lotTotalText() + '</p>' +
     '<button class="primary" data-act="savelot">' + (singleStep ? "登録する" : (ex ? "このロットに登録する" : "ロットを作って登録する")) + '</button>' +
     (singleStep ? '' : '<button class="gbtn" data-act="savelotclose" style="width:100%;margin-top:10px">登録して、このロットを終了する</button>') +
@@ -1290,7 +1383,8 @@ async function saveLot(closeAfter) {
   const addCost = isLot ? 0 : rows.reduce((a, r) => a + r.cost * r.qty, 0);
   if (addCost >= 10000000000 || lotTotal >= 10000000000) { err.textContent = "金額が大きすぎます。"; return; }
   const seq = ex ? ex.seq : nextLotSeq();
-  const no = ex ? ex.no : lotLabel(seq), pfx = ex ? lotPrefix(ex) : "L" + seq;
+  const displayNo = ex ? ex.displayNo : (isLot ? nextLotDisplayNo() : null);
+  const no = ex ? ex.no : (isLot ? lotLabel(displayNo) : "仕入れ" + d.date.replace(/-/g, "/")), pfx = ex ? lotPrefix(ex) : "L" + seq;
   const lotRef = ex ? doc(db, "lots", ex.id) : doc(collection(db, "lots")), lotId = ex ? ex.id : lotRef.id, now = Date.now();
   const used = new Set(stockItems().map((i) => normNo(i.no)));
   const plan = [];
@@ -1319,7 +1413,7 @@ async function saveLot(closeAfter) {
   if (!ex) {
     expenseAmount = isLot ? lotTotal : addCost;
     const expRef = expenseAmount > 0 ? doc(collection(db, "records")) : null;
-    const lotData = { no: no, seq: seq, date: d.date, supplier: supName, mode: d.mode, total: expenseAmount, memo: d.memo.trim(), status: closeAfter ? "closed" : "open", by: me.name, createdAt: now, recordId: expRef ? expRef.id : "" };
+    const lotData = { no: no, seq: seq, displayNo: displayNo, date: d.date, supplier: supName, mode: d.mode, total: expenseAmount, memo: d.memo.trim(), status: closeAfter ? "closed" : "open", by: me.name, createdAt: now, recordId: expRef ? expRef.id : "" };
     if (closeAfter) lotData.closedDate = today();
     ops.push(["set", lotRef, lotData]);
     if (expRef) ops.push(["set", expRef, { type: "expense", date: d.date, amount: expenseAmount, memo: (isLot ? "仕入れ " + no + "（" + supName + "）" : "仕入れ（" + supName + "）").slice(0, 100), by: me.name, uid: me.uid, createdAt: now, lotId: lotRef.id }]);
@@ -1670,8 +1764,8 @@ app.addEventListener("change", (e) => {
 app.addEventListener("input", (e) => {
   const t = e.target;
   if (t.id === "q") {
-    inv.q = t.value; const pos = t.selectionStart; renderStock();
-    const q2 = $("q"); q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (x) {}
+    inv.q = t.value;
+    renderStockResults();
     return;
   }
   if (!inv.draft || state.view !== "lotadd") return;
@@ -2221,6 +2315,7 @@ $("dock").addEventListener("click", (e) => {
   if (b.dataset.view === "add") {
     if (ocrBusy && state.view === "add" && state.type === "sales") { toast("画像を読み取っています。もう少しお待ちください。"); return; }
     state.editId = null; state.type = "sales"; state.tradeId = ""; state.ocrHtml = ""; state.candsHtml = "";
+    state.pendingDraft = loadDraftFromDisk();
   }
   go(b.dataset.view);
 });
@@ -2250,6 +2345,24 @@ app.addEventListener("click", (e) => {
     keepAndRender();
     return;
   }
+  if (t.dataset.act === "draft-load") {
+    const d = state.pendingDraft;
+    state.pendingDraft = null;
+    if (d) {
+      state.type = d.type === "expense" ? "expense" : "sales";
+      const over = { vals: { "f-date": d.date || today(), "f-amt": d.amt || "", "f-memo": d.memo || "" } };
+      if (state.type === "sales") {
+        over.vals["f-fee"] = d.fee || ""; over.vals["f-ship"] = d.ship || ""; over.vals["f-no"] = d.no || "";
+        over.vals["f-site-o"] = d.siteO || ""; over.vals["f-shipm-o"] = d.shipmO || "";
+        over.siteSel = d.site || ""; over.shipSel = d.shipm || "";
+      }
+      keepAndRender(over);
+      if (state.type === "expense") { const el = $("f-cat"); if (el) el.value = d.cat || ""; }
+      toast("下書きを読み込みました");
+    } else render();
+    return;
+  }
+  if (t.dataset.act === "draft-discard") { clearDraftFromDisk(); state.pendingDraft = null; render(); return; }
   if (t.id === "save") { doSave(); return; }
   if (t.id === "del") { doDelete(t); return; }
 });
