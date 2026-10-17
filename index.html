@@ -797,19 +797,28 @@ function sheetAi(msg) {
 async function geminiCall(parts, timeoutMs) {
   const key = geminiKey();
   if (!key) throw new Error("nokey");
-  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeoutMs || 40000);
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent";
+  const body = JSON.stringify({ contents: [{ parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
+  const once = async (u, headers) => {
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeoutMs || 40000);
+    try { return await fetch(u, { method: "POST", headers: headers, signal: ctl.signal, body: body }); }
+    finally { clearTimeout(tm); }
+  };
   let res;
   try {
-    res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent", {
-      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, signal: ctl.signal,
-      body: JSON.stringify({ contents: [{ parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } })
-    });
-  } finally { clearTimeout(tm); }
+    res = await once(url, { "Content-Type": "application/json", "x-goog-api-key": key });
+    if (!res.ok && (res.status === 400 || res.status === 401 || res.status === 403)) {
+      const r2 = await once(url + "?key=" + encodeURIComponent(key), { "Content-Type": "application/json" });
+      if (r2.ok) res = r2;
+    }
+  } catch (e) { throw new Error("AIに接続できませんでした（通信を確認してください）"); }
   if (!res.ok) {
     const st = res.status;
-    if (st === 400 || st === 403) throw new Error("APIキーが正しくないようです（" + st + "）");
+    let detail = "";
+    try { const ej = await res.json(); detail = (ej && ej.error && (ej.error.message || ej.error.status)) || ""; } catch (x) {}
+    detail = String(detail).replace(/\s+/g, " ").slice(0, 160);
     if (st === 429) throw new Error("今日の無料枠を使い切ったか、呼びすぎです。少し待ってください（429）");
-    throw new Error("AIに接続できませんでした（" + st + "）");
+    throw new Error("AIから断られました（" + st + "）" + (detail ? "：" + detail : ""));
   }
   const j = await res.json();
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
