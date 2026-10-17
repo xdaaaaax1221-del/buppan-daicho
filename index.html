@@ -782,12 +782,13 @@ const ICON = {
 };
 
 /* ---------- AI読み取り（Gemini） ---------- */
-const GEMINI_KEY = "bd_gemini_key", GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_KEY = "bd_gemini_key", GEMINI_MODEL = "gemini-3.8-flash";
 function geminiKey() { try { return (localStorage.getItem(GEMINI_KEY) || "").trim(); } catch (e) { return ""; } }
 function sheetAi(msg) {
   openSheet('<h3>AI読み取り（Gemini）</h3>' +
     '<p class="note">仕入れ登録で出品画面のスクショを選ぶと、AIが商品名と商品写真を読み取って自動で入れます。使うにはGoogleのAPIキーが要ります（Google AI Studioで無料で発行できます）。キーはこのスマホの中だけに保存されます。</p>' +
-    '<label class="f" for="ai-key">APIキー</label><input class="field" id="ai-key" type="password" autocomplete="off" placeholder="AIza… で始まるキー" value="' + esc(geminiKey()) + '">' +
+    '<label class="f" for="ai-key">APIキー</label><input class="field" id="ai-key" type="password" autocomplete="off" placeholder="AIza… などで始まるキー" value="' + esc(geminiKey()) + '">' +
+    (geminiKey() ? '<div class="note" style="margin:-6px 4px 10px">保存ずみのキー：' + esc(geminiKey().slice(0, 4)) + '…' + esc(geminiKey().slice(-4)) + '（' + geminiKey().length + '文字）</div>' : '') +
     (msg ? '<div class="ok">' + esc(msg) + '</div>' : '') +
     '<div class="err" id="ai-err"></div>' +
     '<button class="primary" data-s="ai-save">保存する</button>' +
@@ -797,28 +798,35 @@ function sheetAi(msg) {
 async function geminiCall(parts, timeoutMs) {
   const key = geminiKey();
   if (!key) throw new Error("nokey");
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent";
-  const body = JSON.stringify({ contents: [{ parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
+  const body = JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
+  // 通常のGeminiキー（AIza…）と、新形式のキー（AQ.…）で、つなぎ先が違うことがあるので、順に試す
+  const eps = [
+    ["gl", "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"],
+    ["vx", "https://aiplatform.googleapis.com/v1/publishers/google/models/" + GEMINI_MODEL + ":generateContent"]
+  ];
+  let saved = ""; try { saved = localStorage.getItem("bd_gemini_ep") || ""; } catch (e) {}
+  eps.sort((x, y) => (y[0] === saved) - (x[0] === saved));
   const once = async (u, headers) => {
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeoutMs || 40000);
     try { return await fetch(u, { method: "POST", headers: headers, signal: ctl.signal, body: body }); }
     finally { clearTimeout(tm); }
   };
-  let res;
-  try {
-    res = await once(url, { "Content-Type": "application/json", "x-goog-api-key": key });
-    if (!res.ok && (res.status === 400 || res.status === 401 || res.status === 403)) {
-      const r2 = await once(url + "?key=" + encodeURIComponent(key), { "Content-Type": "application/json" });
-      if (r2.ok) res = r2;
+  let res = null, firstErr = null;
+  for (let i = 0; i < eps.length; i++) {
+    let r;
+    try { r = await once(eps[i][1], { "Content-Type": "application/json", "x-goog-api-key": key }); } catch (e) { if (!firstErr) firstErr = { st: 0, detail: "通信できませんでした" }; continue; }
+    if (r.ok) { res = r; try { localStorage.setItem("bd_gemini_ep", eps[i][0]); } catch (e) {} break; }
+    if (!firstErr) {
+      let detail = "";
+      try { const ej = await r.json(); detail = (ej && ej.error && (ej.error.message || ej.error.status)) || ""; } catch (x) {}
+      firstErr = { st: r.status, detail: String(detail).replace(/\s+/g, " ").slice(0, 160) };
     }
-  } catch (e) { throw new Error("AIに接続できませんでした（通信を確認してください）"); }
-  if (!res.ok) {
-    const st = res.status;
-    let detail = "";
-    try { const ej = await res.json(); detail = (ej && ej.error && (ej.error.message || ej.error.status)) || ""; } catch (x) {}
-    detail = String(detail).replace(/\s+/g, " ").slice(0, 160);
-    if (st === 429) throw new Error("今日の無料枠を使い切ったか、呼びすぎです。少し待ってください（429）");
-    throw new Error("AIから断られました（" + st + "）" + (detail ? "：" + detail : ""));
+    if (r.status === 429) break;
+  }
+  if (!res) {
+    const e = firstErr || { st: 0, detail: "" };
+    if (e.st === 429) throw new Error("今日の無料枠を使い切ったか、呼びすぎです。少し待ってください（429）");
+    throw new Error("AIから断られました（" + e.st + "）" + (e.detail ? "：" + e.detail : ""));
   }
   const j = await res.json();
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
