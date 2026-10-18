@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>物販台帳</title>
@@ -1298,7 +1300,7 @@ function renderStock() {
     '<header class="top"><h2 class="title" style="margin:0">在庫</h2><div class="sub">' + stock.length + '点・' + yen(sumOf(stock, costOf)) + '</div></header>' +
     '<div class="acts"><button class="gbtn" data-act="lotadd">＋ 仕入れを登録</button><button class="gbtn" data-act="tocount">棚卸し' + (countState && countState.active ? "（中）" : "") + '</button></div>' +
     '<div class="seg c3"><button data-f="stock" aria-pressed="' + (f === "stock") + '">在庫あり</button><button data-f="sold" aria-pressed="' + (f === "sold") + '">販売済</button><button data-f="lost" aria-pressed="' + (f === "lost") + '">外した</button></div>' +
-    '<input class="field" id="q" type="search" placeholder="商品名・管理番号で探す" value="' + esc(inv.q) + '" style="height:48px;margin-bottom:12px">' +
+    '<input class="field" id="q" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="商品名・管理番号で探す（版 10/18-B）" value="' + esc(inv.q) + '" style="height:48px;margin-bottom:12px">' +
     '<div id="stock-list">' + stockListHtml() + '</div>' +
     (stock.length ? '<p style="text-align:center"><button class="link" data-act="printstock">棚卸表を印刷（A4）</button></p>' : '');
 }
