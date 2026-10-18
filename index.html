@@ -1282,22 +1282,28 @@ function itemTable(list) {
   return '<div class="tbl-wrap"><table class="t"><thead><tr><th>商品</th><th style="text-align:right">金額</th><th>状態</th></tr></thead><tbody>' + list.map(itemRow).join("") + '</tbody></table></div>';
 }
 
-function renderStock() {
+function stockListHtml() {
   const f = inv.filter, q = inv.q.trim().toLowerCase();
   const list = items.filter((i) => {
     if (f !== "all" && i.status !== f) return false;
     if (q && (i.name + " " + i.no).toLowerCase().indexOf(q) < 0) return false;
     return true;
   }).sort((a, b) => cmpNo(b.no, a.no));
+  return itemTable(list);
+}
+function renderStock() {
+  const f = inv.filter;
   const stock = stockItems();
   app.innerHTML =
     '<header class="top"><h2 class="title" style="margin:0">在庫</h2><div class="sub">' + stock.length + '点・' + yen(sumOf(stock, costOf)) + '</div></header>' +
     '<div class="acts"><button class="gbtn" data-act="lotadd">＋ 仕入れを登録</button><button class="gbtn" data-act="tocount">棚卸し' + (countState && countState.active ? "（中）" : "") + '</button></div>' +
     '<div class="seg c3"><button data-f="stock" aria-pressed="' + (f === "stock") + '">在庫あり</button><button data-f="sold" aria-pressed="' + (f === "sold") + '">販売済</button><button data-f="lost" aria-pressed="' + (f === "lost") + '">外した</button></div>' +
     '<input class="field" id="q" type="search" placeholder="商品名・管理番号で探す" value="' + esc(inv.q) + '" style="height:48px;margin-bottom:12px">' +
-    itemTable(list) +
+    '<div id="stock-list">' + stockListHtml() + '</div>' +
     (stock.length ? '<p style="text-align:center"><button class="link" data-act="printstock">棚卸表を印刷（A4）</button></p>' : '');
 }
+// 検索欄は作り直さず、下の一覧だけを入れ替える（日本語の入力中に文字が壊れるのを防ぐ）
+function updateStockList() { const box = $("stock-list"); if (box) box.innerHTML = stockListHtml(); }
 
 function draftPointCount(d) { return d.rows.reduce((a, r) => { const q = numOf(r.qty); return a + (isNaN(q) ? 0 : q); }, 0); }
 const draftLot = (d) => (d.lotId && d.lotId !== "new" ? lots.filter((l) => l.id === d.lotId)[0] : null);
@@ -1913,11 +1919,13 @@ app.addEventListener("change", (e) => {
     if (r && !String(r.code || "").trim()) { r.custom = false; refreshAutoCodes(); }
   }
 });
+app.addEventListener("compositionend", (e) => { if (e.target && e.target.id === "q") { inv.q = e.target.value; updateStockList(); } });
 app.addEventListener("input", (e) => {
   const t = e.target;
   if (t.id === "q") {
-    inv.q = t.value; const pos = t.selectionStart; renderStock();
-    const q2 = $("q"); q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (x) {}
+    inv.q = t.value;
+    if (e.isComposing) return;
+    updateStockList();
     return;
   }
   if (!inv.draft || state.view !== "lotadd") return;
