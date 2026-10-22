@@ -889,6 +889,26 @@ function cleanTitle(x) {
   t = t.replace(/^(商品名|タイトル)\s*[:：]?\s*/, "").replace(/(送料込み|送料無料|匿名配送|取引完了|売り切れ|SOLD|sold)\s*$/g, "").trim();
   return t.slice(0, 60);
 }
+// 売れた商品の写真を、在庫の写真と一緒にAIへ見せて「どれか」を選ばせる
+async function aiPickByPhoto(queryCanvas, title, cands) {
+  const pool = stockItems().filter((i) => i.thumb);
+  if (!pool.length || !queryCanvas) return null;
+  const score = new Map();
+  pool.forEach((i) => score.set(i.id, similarity(title || "", i.name) * 2));
+  (cands && cands.merged || []).forEach((x) => { if (x.it) score.set(x.it.id, (score.get(x.it.id) || 0) + 1.5); });
+  const list = pool.sort((a, b) => (score.get(b.id) || 0) - (score.get(a.id) || 0)).slice(0, 30);
+  const parts = [{ text: "1枚目は「売れた商品」の写真です。続く写真は在庫の商品で、写真の前に商品番号と商品名が書いてあります。売れた商品と同じ物（同じ形・色・柄・模様・素材）を、在庫の中から1つ選んでください。似ているだけの別の物は選ばないでください。売れた商品の名前は「" + (title || "不明") + "」です。名前と見た目の両方が合うものを選んでください。同じ物が無ければ no は null。JSONだけを返してください：{\"no\": \"商品番号またはnull\", \"reason\": \"一言\"}" },
+    { text: "【売れた商品】" }, { inlineData: { mimeType: "image/jpeg", data: queryCanvas.toDataURL("image/jpeg", 0.8).split(",")[1] } }];
+  list.forEach((i) => {
+    const m = /^data:([^;]+);base64,(.*)$/.exec(i.thumb || "");
+    if (!m) return;
+    parts.push({ text: "【在庫 商品番号" + i.no + "：" + String(i.name || "").slice(0, 40) + "】" });
+    parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+  });
+  const j = parseJsonLoose(await geminiCall(parts, 60000)) || {};
+  const no = j.no == null ? "" : String(j.no).trim();
+  return list.filter((i) => String(i.no) === no)[0] || null;
+}
 async function aiReadSale(file) {
   const r = await fileToImage(file);
   const c = scaledCanvas(r.img, 1024);
@@ -2434,6 +2454,8 @@ async function handleTradeImage(file) {
       setOcrMsg("写真を見比べています…", "busy");
       const qc = out.thumbCanvas || cropTradeThumb(out.img);
       const cands = await matchByPhoto(qc, out.t.title);
+      if (!stillHere()) return;
+      try { const pick = await aiPickByPhoto(qc, out.t.title, cands); if (pick) out.t.aiNo = String(pick.no); } catch (x) {}
       if (!stillHere()) return;
       applyTrade(out.t, out.text, cands, qc.toDataURL("image/jpeg", 0.7));
     } catch (e) {
