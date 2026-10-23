@@ -939,7 +939,9 @@ async function aiReadSale(file) {
     ' "date": "売れた日・購入日時（YYYY-MM-DD。無ければ空文字）",' +
     ' "orderId": "商品IDや取引ID（無ければ空文字）",' +
     ' "method": "配送の方法（例：ゆうゆうメルカリ便。無ければ空文字）",' +
-    ' "box": [ymin, xmin, ymax, xmax]（対象商品の写真の位置。画像の縦横を0〜1000で表した整数。無ければnull）}\n' +
+    ' "box": [ymin, xmin, ymax, xmax]（対象商品の写真の位置。画像の縦横を0〜1000で表した整数。無ければnull）,' +
+    ' "items": [画面に見える商品を上から順にすべて。各: {"name": "商品名", "expanded": 内訳（販売価格・販売手数料・送料）が開いて見えているならtrue、閉じていればfalse, "box": [ymin, xmin, ymax, xmax]}]}\n' +
+    "まず items に、画面に見える商品を全部書き、内訳が開いている商品に expanded=true を付けてください。その後、expanded=true の商品の情報だけを、上の name・price・fee・shipping・profit・date・box に書いてください。expanded が無い（取引画面など1商品だけ）ときは、その1商品を対象にしてください。\n" +
     "判断のルール：\n" +
     "・「メルカリ便」「らくらくメルカリ便」「ゆうゆうメルカリ便」「取引画面」などがあればメルカリ。「売上金管理」「PayPay」「ヤフー」「Yahoo」などがあればヤフーフリマ。\n" +
     "・メルカリの取引画面では、商品代金=price、販売手数料=fee、販売利益=profit、購入日時=date、商品ID=orderId。送料込みで金額が無ければ shipping は null。\n" +
@@ -959,6 +961,12 @@ async function aiReadSale(file) {
   else if (t.price != null && t.fee != null && t.ship == null && t.profit != null && t.price - t.fee - t.profit >= 0) { t.ship = t.price - t.fee - t.profit; t.check = "derived"; }
   else if (t.price != null && t.fee == null && t.ship != null && t.profit != null && t.price - t.ship - t.profit >= 0) { t.fee = t.price - t.ship - t.profit; t.check = "derived"; }
   if (t.ship == null && t.price != null && t.fee != null) t.ship = 0;
+  // 内訳が開いている商品を、itemsから確実に拾い直す（別の商品を拾う間違いを防ぐ）
+  const exp = Array.isArray(j.items) ? j.items.filter((x) => x && x.expanded === true || (x && x.expanded === "true")) : [];
+  if (exp.length === 1) {
+    if (exp[0].name) t.title = cleanTitle(exp[0].name);
+    if (Array.isArray(exp[0].box)) j.box = exp[0].box;
+  }
   const crop = cropBox(r.img, j.box);
   return { t: t, text: JSON.stringify(j, null, 1), img: r.img, thumbCanvas: crop ? scaledCanvas(crop, 240) : null };
 }
