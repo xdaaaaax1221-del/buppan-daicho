@@ -454,6 +454,7 @@ async function startSession(user, announce) {
   unsubs.push(onSnapshot(collection(db, "counts"), (s) => { counts = toList(s); refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "suppliers"), (s) => { const d = s.exists() ? s.data() : null; suppliers = d && Array.isArray(d.list) ? d.list : null; refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "sites"), (s) => { const d = s.exists() ? s.data() : null; sites = d && Array.isArray(d.list) ? d.list : []; refresh(); }, () => {}));
+  unsubs.push(onSnapshot(doc(db, "state", "ai"), (s) => { const d = s.exists() ? s.data() : null; cloudAiKey = d && typeof d.key === "string" ? d.key.trim() : ""; }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "count"), (s) => { countState = s.exists() ? s.data() : null; refresh(); }, () => {}));
   unsubs.push(onSnapshot(collection(db, "records"),
     (s) => { records = s.docs.map((x) => Object.assign({ id: x.id }, x.data())); refresh(); },
@@ -623,7 +624,7 @@ function renderAdd() {
     '<div class="seg" role="group" aria-label="項目">' +
     '<button class="s" data-type="sales" aria-pressed="' + isS + '">売上</button>' +
     '<button class="e" data-type="expense" aria-pressed="' + !isS + '">経費</button></div>' +
-    (isS && !rec ? '<div class="card" style="margin-bottom:14px;padding:12px 14px"><div class="nm" style="margin-bottom:4px">売れた画面のスクショから自動入力（任意）</div>' +
+    (isS && !rec ? '<div class="card" style="margin-bottom:14px;padding:12px 14px"><div class="nm" style="margin-bottom:4px">売れた画面のスクショから自動入力（任意）<span style="font-weight:400;font-size:11px;color:var(--mut,#888)"> 版10/23</span></div>' +
       '<p class="note" style="margin:0 0 10px">' + (geminiKey() ? 'メルカリの取引画面や、ヤフーフリマの売上履歴（内訳を開いた状態）のスクショを選ぶと、AIが販売サイト・売値・手数料・送料・日付を読み取り、仕入れのときの写真と見比べて商品番号も入れます。' : 'メルカリなどの取引画面のスクリーンショットを選ぶと、金額・日付・発送方法などが自動で入ります。') + '選ばないときは、手で入力します。</p>' +
       '<label class="gbtn" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>画像を選ぶ<input id="f-img" type="file" accept="image/*" hidden></label>' +
       '<div id="f-ocr">' + (state.ocrHtml || "") + '</div></div>' : '') +
@@ -785,7 +786,8 @@ const ICON = {
 
 /* ---------- AI読み取り（Gemini） ---------- */
 const GEMINI_KEY = "bd_gemini_key", GEMINI_MODEL = "gemini-3.8-flash";
-function geminiKey() { try { return (localStorage.getItem(GEMINI_KEY) || "").trim(); } catch (e) { return ""; } }
+let cloudAiKey = "";
+function geminiKey() { let k = ""; try { k = (localStorage.getItem(GEMINI_KEY) || "").trim(); } catch (e) {} return k || cloudAiKey; }
 function sheetAi(msg) {
   openSheet('<h3>AI読み取り（Gemini）</h3>' +
     '<p class="note">仕入れ登録で出品画面のスクショを選ぶと、AIが商品名と商品写真を読み取って自動で入れます。使うにはGoogleのAPIキーが要ります（Google AI Studioで無料で発行できます）。キーはこのスマホの中だけに保存されます。</p>' +
@@ -2464,7 +2466,9 @@ async function handleTradeImage(file) {
     } finally { if (myToken === ocrToken) ocrBusy = false; }
     return;
   }
-  setOcrMsg("画像を読み取っています…（大きい画像や初回は、少し時間がかかります）", "busy");
+  setOcrMsg('<b>AIのキーが入っていないため、読み取れません。</b>右上の設定 → 「AI読み取り（Gemini）」でキーを入れてください（1回入れれば、すべての端末で使えます）。', "err");
+  ocrBusy = false;
+  return;
   try {
     let r;
     try { r = await fileToImage(file); } catch (e) { if (stillHere()) setOcrMsg("画像を開けませんでした。もう一度選び直してください。", "err"); return; }
@@ -2590,10 +2594,12 @@ sheet.addEventListener("click", async (e) => {
   else if (a === "ai-save") {
     const k = val("ai-key").trim(), er = $("ai-err");
     if (!k) { er.textContent = "APIキーを入れてください。"; return; }
-    try { localStorage.setItem(GEMINI_KEY, k); } catch (x) { er.textContent = "このブラウザには保存できませんでした。"; return; }
-    sheetAi("保存しました。");
+    try { localStorage.setItem(GEMINI_KEY, k); } catch (x) {}
+    cloudAiKey = k;
+    setDoc(doc(db, "state", "ai"), { key: k }).catch(() => {});
+    sheetAi("保存しました。（他のスマホ・パソコンでも使えるように、一緒に保存しました）");
   }
-  else if (a === "ai-clear") { try { localStorage.removeItem(GEMINI_KEY); } catch (x) {} sheetAi("キーを消しました。"); }
+  else if (a === "ai-clear") { try { localStorage.removeItem(GEMINI_KEY); } catch (x) {} cloudAiKey = ""; setDoc(doc(db, "state", "ai"), { key: "" }).catch(() => {}); sheetAi("キーを消しました。"); }
   else if (a === "ai-test") {
     const er = $("ai-err"); er.textContent = ""; b.disabled = true; b.textContent = "確かめています…";
     try { await geminiCall([{ text: '{"ok":true} とだけ返してください' }], 20000); sheetAi("つながりました。使えます。"); }
