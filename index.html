@@ -799,7 +799,7 @@ function sheetAi(msg) {
     (geminiKey() ? '<button class="gbtn" data-s="ai-test" style="width:100%;margin-top:10px">つながるか確かめる</button><button class="ghost n" data-s="ai-clear">キーを消す</button>' : '') +
     '<button class="ghost" data-s="menu">戻る</button>', "ai");
 }
-async function geminiCall(parts, timeoutMs) {
+async function geminiCallOnce(parts, timeoutMs) {
   const key = geminiKey();
   if (!key) throw new Error("nokey");
   const body = JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
@@ -835,6 +835,19 @@ async function geminiCall(parts, timeoutMs) {
   const j = await res.json();
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
   return (txt || []).map((p) => p.text || "").join("");
+}
+// Google側が混み合っている（503/500）ときは、自動で数回やり直す
+async function geminiCall(parts, timeoutMs) {
+  const waits = [2000, 5000, 9000];
+  for (let n = 0; ; n++) {
+    try { return await geminiCallOnce(parts, timeoutMs); }
+    catch (e) {
+      const m = String((e && e.message) || "");
+      const busy = /（(500|502|503|504)）|high demand|overloaded|通信できませんでした/.test(m);
+      if (!busy || n >= waits.length) throw e;
+      await new Promise((r) => setTimeout(r, waits[n]));
+    }
+  }
 }
 function parseJsonLoose(s) {
   const t = String(s || "").replace(/```json|```/g, "").trim();
