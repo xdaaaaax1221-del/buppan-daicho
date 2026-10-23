@@ -2433,6 +2433,7 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
+  if (!geminiKey()) msg = '<div class="ng" style="margin-bottom:8px"><b>AIが使われていません。</b>この端末にAIのキーが入っていないため、精度の低い簡易読み取りになっています。右上の設定 → 「AI読み取り（Gemini）」でキーを入れてください。</div>' + msg;
   if (queryThumbUrl) msg += '<div class="qthumb"><img class="tap" data-ztrade="1" src="' + esc(queryThumbUrl) + '" alt="送った画像を見る"><span>商品の写真として、ここを比べました。押すと、送った画像を見られます。</span></div>';
   msg += '<details><summary>読み取った文字を見る</summary><pre>' + esc(text) + '</pre></details>';
   state.ocrHtml = '<div class="ocrmsg ' + ((got.length || ci.merged.length) ? "ok" : "err") + '">' + msg + '</div>';
