@@ -932,6 +932,7 @@ async function aiReadSale(file) {
     "・メルカリの取引画面では、商品代金=price、販売手数料=fee、販売利益=profit、購入日時=date、商品ID=orderId。送料込みで金額が無ければ shipping は null。\n" +
     "・ヤフーフリマの売上履歴は、複数の商品が並び上部に合計も出ます。対象は「開いて、販売価格・販売手数料・送料の内訳が見えている商品」だけです。その商品の 売上金=profit、販売価格=price、販売手数料=fee（マイナス表記でも正の数に）、送料=shipping、日付=date、商品名=name、その商品の写真=box。上部の合計や他の商品の金額は使わないでください。\n" +
     "・内訳が開いている商品が無ければ、一番大きく写っている商品を対象にしてください。\n" +
+    "・商品名は、長いと「…」で途中までしか表示されません。見えている部分をそのまま書いてください（補ったり推測したりしない）。\n" +
     "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
     "・matchNo は、下の在庫リストにある商品番号だけを返す。商品名・ブランド・色・種類が合うものを選ぶ。リストに無い、または迷うならnull。\n" +
     "在庫リスト（商品番号：商品名）：\n" + stockForAi();
@@ -2245,6 +2246,10 @@ function bigrams(t) {
   return set;
 }
 function similarity(a, b) {
+  // 売上履歴の商品名は「…」で途中までしか出ない。省略された前半が一致していれば、ほぼ同じ商品とみなす
+  const cut = (x) => String(x || "").replace(/[…\.]{1,3}\s*$/, "").replace(/[\s　]+/g, "").toLowerCase();
+  const ca = cut(a), cb = cut(b);
+  if (ca.length >= 6 && cb.length >= 6 && (cb.indexOf(ca) === 0 || ca.indexOf(cb) === 0)) return 0.95;
   const A = bigrams(a), B = bigrams(b);
   if (!A.size || !B.size) return 0;
   let inter = 0; A.forEach((x) => { if (B.has(x)) inter++; });
@@ -2290,7 +2295,7 @@ function compressImage(img) {
     if (full.length < 400000) break;
   }
   // view は画面で大きく見るためだけのもの（データベースには保存しない）
-  return { full: full, thumb: scaledCanvas(img, 80).toDataURL("image/jpeg", 0.5), view: scaledCanvas(img, 900).toDataURL("image/jpeg", 0.8) };
+  return { full: full, thumb: scaledCanvas(img, 160).toDataURL("image/jpeg", 0.6), view: scaledCanvas(img, 900).toDataURL("image/jpeg", 0.8) };
 }
 async function compressPhoto(file) {
   const r = await fileToImage(file);
@@ -2432,6 +2437,7 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
     else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
     if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
+    if (aiHit) msg += "<br>商品番号：AIが写真と商品名を見比べて選びました。違う商品なら、下の候補か商品番号を直してください。";
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
@@ -2458,7 +2464,15 @@ async function handleTradeImage(file) {
       const qc = out.thumbCanvas || cropTradeThumb(out.img);
       const cands = await matchByPhoto(qc, out.t.title);
       if (!stillHere()) return;
-      try { const pick = await aiPickByPhoto(qc, out.t.title, cands); if (pick) out.t.aiNo = String(pick.no); } catch (x) {}
+      let dbg = "";
+      try {
+        const nPh = stockItems().filter((i) => i.thumb).length;
+        const byText = out.t.aiNo;
+        const pick = await aiPickByPhoto(qc, out.t.title, cands);
+        if (pick) out.t.aiNo = String(pick.no);
+        dbg = "\n【見比べ】在庫 " + stockItems().length + "点中、写真あり " + nPh + "点 / 写真で選んだ番号：" + (pick ? pick.no : "なし") + " / 名前で選んだ番号：" + (byText || "なし");
+      } catch (x) { dbg = "\n【見比べ】エラー：" + (x && x.message ? x.message : x); }
+      out.text += dbg;
       if (!stillHere()) return;
       applyTrade(out.t, out.text, cands, qc.toDataURL("image/jpeg", 0.7));
     } catch (e) {
