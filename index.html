@@ -741,7 +741,7 @@ async function doSave() {
   if (it) {
     const rref = doc(collection(db, "records")), batch = writeBatch(db);
     batch.update(doc(db, "items", it.id), { status: "sold", price: amount, soldDate: date, recordId: rref.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm });
-    batch.set(rref, { type: "sales", date: date, amount: amount, memo: (memo || (it.name + "（" + it.no + "）")).slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), itemId: it.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm, orderId: tradeId });
+    batch.set(rref, { type: "sales", date: date, amount: amount, memo: String(it.name || memo).slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), itemId: it.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm, orderId: tradeId });
     p = batch.commit();
   } else if (wasEdit) {
     const data = { type: state.type, date: date, amount: amount, memo: memo, site: isS ? siteName : "", fee: isS ? fee : 0, shipping: isS ? ship : 0, shipMethod: isS ? shipm : "", category: isS ? "" : category };
@@ -901,6 +901,7 @@ function stockForAi() {
 }
 function cleanTitle(x) {
   let t = String(x || "").replace(/\s+/g, " ").trim();
+  t = t.replace(/[^\p{L}\p{N}\p{M}\s・ー＆&()（）【】\[\]\-\/.,、。!！?？+＋~〜%％'’"”“]/gu, "").replace(/\s+/g, " ").trim();
   t = t.replace(/^(商品名|タイトル)\s*[:：]?\s*/, "").replace(/(送料込み|送料無料|匿名配送|取引完了|売り切れ|SOLD|sold)\s*$/g, "").trim();
   return t.slice(0, 60);
 }
@@ -949,7 +950,7 @@ async function aiReadSale(file) {
     "・内訳が開いている商品が無ければ、一番大きく写っている商品を対象にしてください。\n" +
     "・商品名は、長いと「…」で途中までしか表示されません。見えている部分をそのまま書いてください（補ったり推測したりしない）。\n" +
     "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
-    "・matchNo は、下の在庫リストにある商品番号だけを返す。商品名・ブランド・色・種類が合うものを選ぶ。リストに無い、または迷うならnull。\n" +
+    "・matchNo は、下の在庫リストにある商品番号だけを返す。判断の中心は商品名です。ブランド名・型番・種類・色などの言葉が合うものを選ぶ（売上画面の名前は、途中で省略されていることがある）。リストに無い、または全く自信がないときだけnull。\n" +
     "在庫リスト（商品番号：商品名）：\n" + stockForAi();
   const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
   const j = parseJsonLoose(txt) || {};
@@ -2441,13 +2442,15 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
   const ci = candInfo || { merged: computeCands(t.title), imgTop: null, imgRunner: null };
   let matchedByPhoto = false;
   const aiHit = t.aiNo && stockItems().filter((i) => String(i.no) === t.aiNo)[0];
-  if (aiHit) { vals["f-no"] = aiHit.no; got.push("商品番号"); }
-  else if (ci.imgTop && ci.imgTop.dist <= 14 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 4)) { vals["f-no"] = ci.imgTop.it.no; matchedByPhoto = true; }
+  let hitItem = null;
+  if (aiHit) hitItem = aiHit;
   else {
     const tc = computeCands(t.title);
-    if (tc.length && tc[0].sc >= 0.4 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.1)) vals["f-no"] = tc[0].it.no;
+    if (tc.length && tc[0].sc >= 0.4 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.1)) hitItem = tc[0].it;
+    else if (ci.imgTop && ci.imgTop.dist <= 8 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 6)) { hitItem = ci.imgTop.it; matchedByPhoto = true; }
   }
-  if (!vals["f-no"] && t.title) vals["f-memo"] = t.title.slice(0, 100);
+  if (hitItem) { vals["f-no"] = hitItem.no; vals["f-memo"] = hitItem.name; got.push("商品番号"); }
+  else if (t.title) vals["f-memo"] = t.title.slice(0, 100);
   state.candsHtml = candsHtml(ci.merged);
   let msg;
   if (!got.length && !ci.merged.length) msg = "読み取れた項目がありません。別の画像にするか、手で入力してください。";
@@ -2458,7 +2461,7 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
     else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
     if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
-    if (aiHit) msg += "<br>商品番号：AIが写真と商品名を見比べて選びました。違う商品なら、下の候補か商品番号を直してください。";
+    if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名を見比べて、いちばん近い商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
@@ -2485,15 +2488,6 @@ async function handleTradeImage(file) {
       const qc = out.thumbCanvas || cropTradeThumb(out.img);
       const cands = await matchByPhoto(qc, out.t.title);
       if (!stillHere()) return;
-      let dbg = "";
-      try {
-        const nPh = stockItems().filter((i) => i.thumb).length;
-        const byText = out.t.aiNo;
-        const pick = await aiPickByPhoto(qc, out.t.title, cands);
-        if (pick) out.t.aiNo = String(pick.no);
-        dbg = "\n【見比べ】在庫 " + stockItems().length + "点中、写真あり " + nPh + "点 / 写真で選んだ番号：" + (pick ? pick.no : "なし") + " / 名前で選んだ番号：" + (byText || "なし");
-      } catch (x) { dbg = "\n【見比べ】エラー：" + (x && x.message ? x.message : x); }
-      out.text += dbg;
       if (!stillHere()) return;
       applyTrade(out.t, out.text, cands, qc.toDataURL("image/jpeg", 0.7));
     } catch (e) {
