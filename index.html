@@ -932,7 +932,6 @@ async function aiReadSale(file) {
   const prompt = "これはフリマアプリで「売れた商品」の情報が写っているスクリーンショットです。次のJSONだけを返してください。説明文は不要です。\n" +
     '{"site": "メルカリ" または "ヤフーフリマ" または "ラクマ" または "不明",' +
     ' "name": "商品名（商品タイトルの文字だけ）",' +
-    ' "matchNo": "下の在庫リストの中で、この売れた商品と同じものの商品番号。確信が持てなければnull",' +
     ' "price": 販売価格・商品代金（円・整数。無ければnull）,' +
     ' "fee": 販売手数料（円・整数・正の数。無ければnull）,' +
     ' "shipping": 送料（円・整数・正の数。「送料込み」などで金額が無ければnull）,' +
@@ -950,12 +949,11 @@ async function aiReadSale(file) {
     "・内訳が開いている商品が無ければ、一番大きく写っている商品を対象にしてください。\n" +
     "・商品名は、長いと「…」で途中までしか表示されません。見えている部分をそのまま書いてください（補ったり推測したりしない）。\n" +
     "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
-    "・matchNo は、下の在庫リストにある商品番号だけを返す。判断の中心は商品名です。ブランド名・型番・種類・色などの言葉が合うものを選ぶ（売上画面の名前は、途中で省略されていることがある）。リストに無い、または全く自信がないときだけnull。\n" +
-    "在庫リスト（商品番号：商品名）：\n" + stockForAi();
+    "";
   const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
   const j = parseJsonLoose(txt) || {};
   const num = (v) => { if (v === null || v === undefined || v === "") return null; const n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); return isNaN(n) ? null : n; };
-  const t = { price: num(j.price), fee: num(j.fee), ship: num(j.shipping), profit: num(j.profit), method: String(j.method || "").slice(0, 20), shipper: "", date: "", orderId: String(j.orderId || "").trim().slice(0, 30), title: cleanTitle(j.name), aiNo: String(j.matchNo == null ? "" : j.matchNo).trim(), site: siteFromAi(j.site), check: "unverified", notes: [] };
+  const t = { price: num(j.price), fee: num(j.fee), ship: num(j.shipping), profit: num(j.profit), method: String(j.method || "").slice(0, 20), shipper: "", date: "", orderId: String(j.orderId || "").trim().slice(0, 30), title: cleanTitle(j.name), aiNo: "", site: siteFromAi(j.site), check: "unverified", notes: [] };
   const dm = /(20\d{2})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(j.date || ""));
   if (dm) t.date = dm[1] + "-" + String(+dm[2]).padStart(2, "0") + "-" + String(+dm[3]).padStart(2, "0");
   if (t.price != null && t.fee != null && t.ship != null && t.profit != null) t.check = t.price - t.fee - t.ship === t.profit ? "ok" : "mismatch";
@@ -983,6 +981,7 @@ async function handleItemPhoto(i, file) {
     const out = await aiReadListing(file);
     if (!inv.draft || inv.draft.rows[i] !== r) return;
     r.photo = compressImage(out.img);
+    if (out.name) r.srcTitle = String(out.name).slice(0, 100);
     if (out.name && !r.name.trim()) r.name = out.name;
     r.ai = "done"; r.aiMsg = out.name ? "AIが読み取りました。商品名が違っていたら直してください。" : "商品名を読み取れませんでした。手で入れてください。";
   } catch (e) {
@@ -1086,7 +1085,7 @@ async function doRestore() {
   });
   (Array.isArray(d.items) ? d.items : []).forEach((i) => {
     if (i && typeof i.name === "string" && i.name && typeof i.cost === "number" && (i.status === "stock" || i.status === "sold" || i.status === "lost")) {
-      ops.push(["items", idOf("items", i), { lotId: S(i.lotId, 60), no: S(i.no, 40), name: S(i.name, 60), cost: Math.max(0, Math.round(i.cost)), status: i.status, price: Math.max(0, Math.round(i.price || 0)), soldDate: S(i.soldDate, 10), reason: S(i.reason, 20), lostDate: S(i.lostDate, 10), recordId: S(i.recordId, 60), site: S(i.site, 20), fee: Math.max(0, Math.round(i.fee || 0)), shipping: Math.max(0, Math.round(i.shipping || 0)), shipMethod: S(i.shipMethod, 20), thumb: (typeof i.thumb === "string" && i.thumb.indexOf("data:image/") === 0 && i.thumb.length < 20000 ? i.thumb : ""), photoId: S(i.photoId, 40), by: i.by ? S(i.by, 30) : "バックアップ", createdAt: i.createdAt || Date.now() }]);
+      ops.push(["items", idOf("items", i), { lotId: S(i.lotId, 60), no: S(i.no, 40), name: S(i.name, 60), srcTitle: S(i.srcTitle || "", 100), cost: Math.max(0, Math.round(i.cost)), status: i.status, price: Math.max(0, Math.round(i.price || 0)), soldDate: S(i.soldDate, 10), reason: S(i.reason, 20), lostDate: S(i.lostDate, 10), recordId: S(i.recordId, 60), site: S(i.site, 20), fee: Math.max(0, Math.round(i.fee || 0)), shipping: Math.max(0, Math.round(i.shipping || 0)), shipMethod: S(i.shipMethod, 20), thumb: (typeof i.thumb === "string" && i.thumb.indexOf("data:image/") === 0 && i.thumb.length < 20000 ? i.thumb : ""), photoId: S(i.photoId, 40), by: i.by ? S(i.by, 30) : "バックアップ", createdAt: i.createdAt || Date.now() }]);
     }
   });
   (Array.isArray(d.counts) ? d.counts : []).forEach((c) => {
@@ -1511,7 +1510,7 @@ async function saveLot(closeAfter) {
     if (!isLot && isNaN(cost)) { err.textContent = (i + 1) + "行目の仕入れ値を入れてください。"; return; }
     if (isNaN(qty) || qty < 1 || qty > 99) { err.textContent = (i + 1) + "行目の個数は1〜99にしてください。"; return; }
     total += qty;
-    rows.push({ photo: r.photo || null, code: (rowCustom(r) ? String(r.code) : "").normalize("NFKC").trim().slice(0, 30), name: r.name.trim().slice(0, 60), cost: cost, qty: qty });
+    rows.push({ photo: r.photo || null, code: (rowCustom(r) ? String(r.code) : "").normalize("NFKC").trim().slice(0, 30), name: r.name.trim().slice(0, 60), srcTitle: String(r.srcTitle || "").slice(0, 100), cost: cost, qty: qty });
   }
   if (total > 200) { err.textContent = "1回の登録は、合計200点までです。"; return; }
   const addCost = isLot ? 0 : rows.reduce((a, r) => a + r.cost * r.qty, 0);
@@ -1535,7 +1534,7 @@ async function saveLot(closeAfter) {
       const key = normNo(itemNo);
       if (used.has(key)) { err.textContent = "商品番号「" + itemNo + "」は、すでに使われています。"; return; }
       used.add(key);
-      const idata = { lotId: lotId, no: itemNo, name: r.name, cost: r.cost, status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, by: me.name, createdAt: now };
+      const idata = { lotId: lotId, no: itemNo, name: r.name, srcTitle: r.srcTitle || r.name, cost: r.cost, status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, by: me.name, createdAt: now };
       if (r.photo) { idata.thumb = r.photo.thumb; idata.photoId = photoRefs[ri].id; }
       plan.push({ ref: doc(collection(db, "items")), data: idata });
     }
@@ -2419,7 +2418,7 @@ function setOcrMsg(html, kind) {
 }
 function computeCands(title) {
   if (!title) return [];
-  return stockItems().map((it) => ({ it: it, sc: similarity(title, it.name) })).filter((x) => x.sc >= 0.25).sort((a, b) => b.sc - a.sc).slice(0, 3);
+  return stockItems().map((it) => ({ it: it, sc: Math.max(similarity(title, it.name), it.srcTitle ? similarity(title, it.srcTitle) : 0) })).filter((x) => x.sc >= 0.25).sort((a, b) => b.sc - a.sc).slice(0, 3);
 }
 const thumbImg = (it) => (it && it.thumb ? '<img class="th tap" data-zi="' + esc(it.id) + '" src="' + esc(it.thumb) + '" alt="写真を大きく見る">' : "");
 function candsHtml(c) {
@@ -2446,7 +2445,8 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
   if (aiHit) hitItem = aiHit;
   else {
     const tc = computeCands(t.title);
-    if (tc.length && tc[0].sc >= 0.4 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.1)) hitItem = tc[0].it;
+    if (tc.length && tc[0].sc >= 0.9 && (tc.length === 1 || tc[1].sc < 0.9)) hitItem = tc[0].it;
+    else if (tc.length && tc[0].sc >= 0.5 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) hitItem = tc[0].it;
     else if (ci.imgTop && ci.imgTop.dist <= 8 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 6)) { hitItem = ci.imgTop.it; matchedByPhoto = true; }
   }
   if (hitItem) { vals["f-no"] = hitItem.no; vals["f-memo"] = hitItem.name; got.push("商品番号"); }
@@ -2461,7 +2461,7 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
     else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
     if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
-    if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名を見比べて、いちばん近い商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
+    if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名が一致する商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
