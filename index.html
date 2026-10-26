@@ -1011,7 +1011,7 @@ async function handleItemPhoto(i, file) {
     r.ai = "done"; r.aiMsg = out.name ? "AIが読み取りました。商品名が違っていたら直してください。" : "商品名を読み取れませんでした。手で入れてください。";
   } catch (e) {
     try { r.photo = await compressPhoto(file); } catch (x) {}
-    r.ai = "error"; r.aiMsg = (e && e.message && e.message !== "nokey" ? e.message : "AIで読み取れませんでした") + "。写真だけ入れました。";
+    r.ai = "error"; r.aiMsg = /（(429|500|502|503|504)）|high demand|上限|呼びすぎ/.test(String(e && e.message)) ? "AIが混み合っていて読み取れませんでした。写真は入りました。商品名は手で入れて、そのまま登録できます。" : ((e && e.message && e.message !== "nokey" ? e.message : "AIで読み取れませんでした") + "。写真だけ入れました。商品名は手で入れてください。");
   }
   render(true);
 }
