@@ -855,7 +855,7 @@ async function altModels() {
 }
 // 混み合って断られた（503/500）ときは、ほかのAIモデルに切り替えて試す。それでもだめなら、retries の回数ぶん待ってやり直す
 async function geminiCall(parts, timeoutMs, retries) {
-  const isBusy = (e) => /（(0|500|502|503|504)）|high demand|overloaded/.test(String((e && e.message) || ""));
+  const isBusy = (e) => /（(0|429|500|502|503|504)）|high demand|overloaded|無料枠/.test(String((e && e.message) || ""));
   let first;
   try { return await geminiCallOnce(parts, timeoutMs); } catch (e) { if (!isBusy(e)) throw e; first = e; }
   let alts = [];
