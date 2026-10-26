@@ -836,15 +836,16 @@ async function geminiCallOnce(parts, timeoutMs) {
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
   return (txt || []).map((p) => p.text || "").join("");
 }
-// Google側が混み合っている（503/500）ときは、自動で数回やり直す
-async function geminiCall(parts, timeoutMs) {
-  const waits = [2000, 5000, 9000];
+// 混み合って断られた（503/500）ときだけ、retries の回数ぶん、やり直す（既定は0＝やり直さない）
+async function geminiCall(parts, timeoutMs, retries) {
+  const waits = [2000, 4000];
+  const max = Math.min(retries || 0, waits.length);
   for (let n = 0; ; n++) {
     try { return await geminiCallOnce(parts, timeoutMs); }
     catch (e) {
       const m = String((e && e.message) || "");
-      const busy = /（(500|502|503|504)）|high demand|overloaded|通信できませんでした/.test(m);
-      if (!busy || n >= waits.length) throw e;
+      const busy = /（(500|502|503|504)）|high demand|overloaded/.test(m);
+      if (!busy || n >= max) throw e;
       await new Promise((r) => setTimeout(r, waits[n]));
     }
   }
@@ -865,7 +866,7 @@ async function aiReadListing(file) {
     "次のJSONだけを返してください。説明文は不要です。\n" +
     '{"name": "商品名（画面に書かれている商品タイトルを、そのまま1行で。SOLDや売れた等の表示、ボタンの文字、説明文は含めない。見つからなければ空文字）",' +
     ' "box": [ymin, xmin, ymax, xmax]（商品の写真が一番大きく写っている長方形の位置。画像の縦横をそれぞれ0〜1000で表した整数。商品写真が無ければ null）}';
-  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
+  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }], 25000);
   const j = parseJsonLoose(txt) || {};
   const name = String(j.name || "").replace(/\s+/g, " ").trim().slice(0, 60);
   return { name: name, img: cropBox(r.img, j.box) || r.img };
@@ -905,15 +906,11 @@ function cleanTitle(x) {
   t = t.replace(/^(商品名|タイトル)\s*[:：]?\s*/, "").replace(/(送料込み|送料無料|匿名配送|取引完了|売り切れ|SOLD|sold)\s*$/g, "").trim();
   return t.slice(0, 60);
 }
-// 売れた商品の写真を、在庫の写真と一緒にAIへ見せて「どれか」を選ばせる
-async function aiPickByPhoto(queryCanvas, title, cands) {
-  const pool = stockItems().filter((i) => i.thumb);
-  if (!pool.length || !queryCanvas) return null;
-  const score = new Map();
-  pool.forEach((i) => score.set(i.id, similarity(title || "", i.name) * 2));
-  (cands && cands.merged || []).forEach((x) => { if (x.it) score.set(x.it.id, (score.get(x.it.id) || 0) + 1.5); });
-  const list = pool.sort((a, b) => (score.get(b.id) || 0) - (score.get(a.id) || 0)).slice(0, 30);
-  const parts = [{ text: "1枚目は「売れた商品」の写真です。続く写真は在庫の商品で、写真の前に商品番号と商品名が書いてあります。売れた商品と同じ物（同じ形・色・柄・模様・素材）を、在庫の中から1つ選んでください。似ているだけの別の物は選ばないでください。売れた商品の名前は「" + (title || "不明") + "」です。名前と見た目の両方が合うものを選んでください。同じ物が無ければ no は null。JSONだけを返してください：{\"no\": \"商品番号またはnull\", \"reason\": \"一言\"}" },
+// 売れた商品の写真と、名前で絞った数件の在庫写真をAIに見せて「同じ物はどれか」を選ばせる（名前だけで決まらないときだけ使う）
+async function aiPickByPhoto(queryCanvas, title, list) {
+  list = (list || []).filter((i) => i && i.thumb).slice(0, 5);
+  if (!list.length || !queryCanvas) return null;
+  const parts = [{ text: "1枚目は「売れた商品」の写真です。切り取り方や写っている範囲は、在庫の写真と違うことがあります。続く写真は在庫の商品の候補で、写真の前に商品番号と商品名が書いてあります。写っている物そのもの（形・色・柄・模様・素材）が同じ在庫を1つ選んでください。似ているだけの別の物は選ばないでください。同じ物が無ければ no は null。売れた商品の名前は「" + (title || "不明") + "」です。JSONだけを返してください：{\"no\": \"商品番号またはnull\"}" },
     { text: "【売れた商品】" }, { inlineData: { mimeType: "image/jpeg", data: queryCanvas.toDataURL("image/jpeg", 0.8).split(",")[1] } }];
   list.forEach((i) => {
     const m = /^data:([^;]+);base64,(.*)$/.exec(i.thumb || "");
@@ -921,9 +918,16 @@ async function aiPickByPhoto(queryCanvas, title, cands) {
     parts.push({ text: "【在庫 商品番号" + i.no + "：" + String(i.name || "").slice(0, 40) + "】" });
     parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
   });
-  const j = parseJsonLoose(await geminiCall(parts, 60000)) || {};
+  const j = parseJsonLoose(await geminiCall(parts, 40000)) || {};
   const no = j.no == null ? "" : String(j.no).trim();
   return list.filter((i) => String(i.no) === no)[0] || null;
+}
+// 商品名だけで1つに決まるか
+function nameDecides(title) {
+  const tc = computeCands(title);
+  if (tc.length && tc[0].sc >= 0.9 && (tc.length === 1 || tc[1].sc < 0.9)) return tc[0].it;
+  if (tc.length && tc[0].sc >= 0.5 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) return tc[0].it;
+  return null;
 }
 async function aiReadSale(file) {
   const r = await fileToImage(file);
@@ -948,7 +952,7 @@ async function aiReadSale(file) {
     "・商品名は、長いと「…」で途中までしか表示されません。見えている部分をそのまま書いてください（補ったり推測したりしない）。\n" +
     "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
     "";
-  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
+  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }], 30000, 1);
   let j = parseJsonLoose(txt) || {};
   if (Array.isArray(j)) j = j[0] || {};
   const num = (v) => { if (v === null || v === undefined || v === "") return null; const n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); return isNaN(n) ? null : n; };
@@ -1084,7 +1088,7 @@ async function doRestore() {
   });
   (Array.isArray(d.items) ? d.items : []).forEach((i) => {
     if (i && typeof i.name === "string" && i.name && typeof i.cost === "number" && (i.status === "stock" || i.status === "sold" || i.status === "lost")) {
-      ops.push(["items", idOf("items", i), { lotId: S(i.lotId, 60), no: S(i.no, 40), name: S(i.name, 60), srcTitle: S(i.srcTitle || "", 100), cost: Math.max(0, Math.round(i.cost)), status: i.status, price: Math.max(0, Math.round(i.price || 0)), soldDate: S(i.soldDate, 10), reason: S(i.reason, 20), lostDate: S(i.lostDate, 10), recordId: S(i.recordId, 60), site: S(i.site, 20), fee: Math.max(0, Math.round(i.fee || 0)), shipping: Math.max(0, Math.round(i.shipping || 0)), shipMethod: S(i.shipMethod, 20), thumb: (typeof i.thumb === "string" && i.thumb.indexOf("data:image/") === 0 && i.thumb.length < 20000 ? i.thumb : ""), photoId: S(i.photoId, 40), by: i.by ? S(i.by, 30) : "バックアップ", createdAt: i.createdAt || Date.now() }]);
+      ops.push(["items", idOf("items", i), { lotId: S(i.lotId, 60), no: S(i.no, 40), name: S(i.name, 60), cost: Math.max(0, Math.round(i.cost)), status: i.status, price: Math.max(0, Math.round(i.price || 0)), soldDate: S(i.soldDate, 10), reason: S(i.reason, 20), lostDate: S(i.lostDate, 10), recordId: S(i.recordId, 60), site: S(i.site, 20), fee: Math.max(0, Math.round(i.fee || 0)), shipping: Math.max(0, Math.round(i.shipping || 0)), shipMethod: S(i.shipMethod, 20), thumb: (typeof i.thumb === "string" && i.thumb.indexOf("data:image/") === 0 && i.thumb.length < 20000 ? i.thumb : ""), photoId: S(i.photoId, 40), by: i.by ? S(i.by, 30) : "バックアップ", createdAt: i.createdAt || Date.now() }]);
     }
   });
   (Array.isArray(d.counts) ? d.counts : []).forEach((c) => {
@@ -1533,7 +1537,7 @@ async function saveLot(closeAfter) {
       const key = normNo(itemNo);
       if (used.has(key)) { err.textContent = "商品番号「" + itemNo + "」は、すでに使われています。"; return; }
       used.add(key);
-      const idata = { lotId: lotId, no: itemNo, name: r.name, srcTitle: r.srcTitle || r.name, cost: r.cost, status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, by: me.name, createdAt: now };
+      const idata = { lotId: lotId, no: itemNo, name: r.name, cost: r.cost, status: "stock", price: 0, soldDate: "", reason: "", lostDate: "", recordId: "", site: "", fee: 0, shipping: 0, by: me.name, createdAt: now };
       if (r.photo) { idata.thumb = r.photo.thumb; idata.photoId = photoRefs[ri].id; }
       plan.push({ ref: doc(collection(db, "items")), data: idata });
     }
@@ -2460,7 +2464,8 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
     else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
     if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
-    if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名が一致する商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
+    if (hitItem && aiHit) msg += "<br>商品番号：商品名で決まらなかったので、写真を見比べて選びました。違う商品なら、下の候補か商品番号を直してください。";
+    else if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名が一致する商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
@@ -2478,6 +2483,7 @@ async function handleTradeImage(file) {
   const stillHere = () => myToken === ocrToken && state.view === "add" && state.type === "sales";
   ocrBusy = true;
   if (geminiKey()) {
+    const t0 = Date.now();
     setOcrMsg("AIが画像を読み取っています…", "busy");
     try {
       const out = await aiReadSale(file);
@@ -2487,7 +2493,24 @@ async function handleTradeImage(file) {
       const qc = out.thumbCanvas || cropTradeThumb(out.img);
       const cands = await matchByPhoto(qc, out.t.title);
       if (!stillHere()) return;
+      if (!nameDecides(out.t.title)) {
+        // 名前で決まらないときだけ、候補の写真をAIに見比べさせる
+        try {
+          const pool = [];
+          const add = (it) => { if (it && it.thumb && !pool.some((p) => p.id === it.id)) pool.push(it); };
+          stockItems().map((it) => ({ it: it, sc: Math.max(similarity(out.t.title, it.name), it.srcTitle ? similarity(out.t.title, it.srcTitle) : 0) })).sort((x, y) => y.sc - x.sc).slice(0, 4).forEach((x) => { if (x.sc >= 0.1) add(x.it); });
+          (cands.merged || []).forEach((x) => add(x.it));
+          if (pool.length) {
+            setOcrMsg("写真を見比べています…", "busy");
+            const pick = await aiPickByPhoto(qc, out.t.title, pool);
+            if (pick) out.t.aiNo = String(pick.no);
+            out.text += "\n【写真の見比べ】候補 " + pool.length + "件 → " + (pick ? "番号 " + pick.no : "該当なし");
+          }
+        } catch (x) { out.text += "\n【写真の見比べ】エラー：" + (x && x.message ? x.message : x); }
+        if (!stillHere()) return;
+      }
       if (!stillHere()) return;
+      out.text += "\n【時間】" + ((Date.now() - t0) / 1000).toFixed(1) + "秒";
       applyTrade(out.t, out.text, cands, qc.toDataURL("image/jpeg", 0.7));
     } catch (e) {
       if (stillHere()) setOcrMsg((e && e.message ? e.message : "AIで読み取れませんでした") + "。手で入力してください。", "err");
