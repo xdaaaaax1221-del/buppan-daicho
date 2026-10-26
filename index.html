@@ -450,13 +450,13 @@ async function startSession(user, announce) {
   unsubs = [];
   const toList = (s) => s.docs.map((x) => Object.assign({ id: x.id }, x.data()));
   unsubs.push(onSnapshot(collection(db, "lots"), (s) => { lots = toList(s); refresh(); }, () => {}));
-  unsubs.push(onSnapshot(collection(db, "items"), (s) => { items = toList(s); refresh(); }, () => { toast("在庫を読み込めませんでした"); }));
+  unsubs.push(onSnapshot(collection(db, "items"), (s) => { items = toList(s); yahooLoaded.i = true; migrateYahoo(); refresh(); }, () => { toast("在庫を読み込めませんでした"); }));
   unsubs.push(onSnapshot(collection(db, "counts"), (s) => { counts = toList(s); refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "suppliers"), (s) => { const d = s.exists() ? s.data() : null; suppliers = d && Array.isArray(d.list) ? d.list : null; refresh(); }, () => {}));
-  unsubs.push(onSnapshot(doc(db, "state", "sites"), (s) => { const d = s.exists() ? s.data() : null; sites = d && Array.isArray(d.list) ? d.list : []; refresh(); }, () => {}));
+  unsubs.push(onSnapshot(doc(db, "state", "sites"), (s) => { const d = s.exists() ? s.data() : null; sites = d && Array.isArray(d.list) ? d.list : []; migrateYahooSites(); refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "count"), (s) => { countState = s.exists() ? s.data() : null; refresh(); }, () => {}));
   unsubs.push(onSnapshot(collection(db, "records"),
-    (s) => { records = s.docs.map((x) => Object.assign({ id: x.id }, x.data())); refresh(); },
+    (s) => { records = s.docs.map((x) => Object.assign({ id: x.id }, x.data())); yahooLoaded.r = true; migrateYahoo(); migrateYahooSites(); refresh(); },
     () => { toast("記録を読み込めませんでした"); }));
   unsubs.push(onSnapshot(collection(db, "members"),
     (s) => {
@@ -1143,6 +1143,42 @@ function keepAndRender(over) {
   state.siteSel = null;
   ids.forEach((id) => { const el = $(id); if (el && keep[id] !== "" && keep[id] !== undefined) el.value = keep[id]; });
   updateSaleHints();
+}
+// カタカナの「ヤフーフリマ」を、英字の「Yahooフリマ」に統一する（1回だけ。該当が無ければ何もしない）
+const yahooLoaded = { i: false, r: false };
+let yahooTried = false;
+async function migrateYahoo() {
+  if (yahooTried || !yahooLoaded.i || !yahooLoaded.r || !me) return;
+  const cnt = {};
+  records.forEach((r) => { if (r.type === "sales" && r.site && /^yahoo/i.test(r.site)) cnt[r.site] = (cnt[r.site] || 0) + 1; });
+  const tgt = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+  if (!tgt) return;
+  const bad = (x) => /^ヤフー/.test(String(x || ""));
+  const rs = records.filter((r) => r.type === "sales" && bad(r.site));
+  const its = items.filter((i) => bad(i.site));
+  if (!rs.length && !its.length) return;
+  yahooTried = true;
+  try {
+    const b = writeBatch(db);
+    rs.forEach((r) => b.update(doc(db, "records", r.id), { site: tgt }));
+    its.forEach((i) => b.update(doc(db, "items", i.id), { site: tgt }));
+    await b.commit();
+    toast("ヤフーフリマの表記を「" + tgt + "」に統一しました（" + rs.length + "件）");
+  } catch (e) {}
+}
+let yahooSitesTried = false;
+async function migrateYahooSites() {
+  if (yahooSitesTried || !me) return;
+  const bad = (x) => /^ヤフー/.test(String(x || ""));
+  if (!sites.some((x) => x && bad(x.name))) return;
+  const names = {};
+  records.forEach((r) => { if (r.type === "sales" && r.site && /^yahoo/i.test(r.site)) names[r.site] = (names[r.site] || 0) + 1; });
+  const tgt = Object.keys(names).sort((a, b) => names[b] - names[a])[0];
+  if (!tgt || !yahooLoaded.r) return;
+  yahooSitesTried = true;
+  const seen = {}, ns = [];
+  sites.forEach((x) => { const y = x && bad(x.name) ? Object.assign({}, x, { name: tgt }) : x; if (y && !seen[y.name]) { seen[y.name] = 1; ns.push(y); } });
+  try { await setDoc(doc(db, "state", "sites"), { list: ns }); } catch (e) {}
 }
 function siteNames() {
   const cnt = {};
@@ -2083,11 +2119,12 @@ function anResultsHtml() {
 }
 function renderAnalytics() {
   const list = records.filter((r) => inPeriod(r.date)), t = sums(list);
-  const bySite = {}, byShip = {};
+  const bySite = {}, bySiteN = {}, byShip = {};
   list.forEach((r) => {
     if (r.type !== "sales") return;
     const a = r.site || "指定なし", b = r.shipMethod || "指定なし";
     bySite[a] = (bySite[a] || 0) + r.amount;
+    bySiteN[a] = (bySiteN[a] || 0) + 1;
     byShip[b] = (byShip[b] || 0) + 1;
   });
   let purchase = 0;
@@ -2114,6 +2151,7 @@ function renderAnalytics() {
     '<div class="card"><div class="k">純利益（' + periodLabel() + '）</div><div class="v' + (t.b < 0 ? ' neg' : '') + '">' + sy(t.b) + '</div></div></div>' +
     '<div class="card an-card"><h3 class="an-title">月別の売上と純利益</h3><div class="lgd"><span><i style="background:var(--sales)"></i>売上</span><span><i style="background:var(--expense)"></i>純利益</span><span class="sub">直近12か月</span></div>' + monthlyChart() + '</div>' +
     '<div class="card an-card"><h3 class="an-title">販売サイト別の売上</h3>' + donutHtml(Object.keys(bySite).map((k) => ({ name: k, value: bySite[k] })), yen, "この期間の売上はありません。") + '</div>' +
+    '<div class="card an-card"><h3 class="an-title">販売サイト別の売上件数</h3>' + donutHtml(Object.keys(bySiteN).map((k) => ({ name: k, value: bySiteN[k] })), (v) => v + "件", "この期間の売上はありません。") + '</div>' +
     '<div class="card an-card"><h3 class="an-title">発送方法別の件数</h3>' + donutHtml(Object.keys(byShip).map((k) => ({ name: k, value: byShip[k] })), (v) => v + "件", "この期間の売上はありません。") + '</div>' +
     '<div class="card an-card"><h3 class="an-title">費用の内訳</h3>' + donutHtml(cost, yen, "この期間の費用はありません。") + '</div>' +
     '<div class="card an-card"><h3 class="an-title">利益の多い商品 上位5</h3>' + rank + '</div>';
