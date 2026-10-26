@@ -454,7 +454,6 @@ async function startSession(user, announce) {
   unsubs.push(onSnapshot(collection(db, "counts"), (s) => { counts = toList(s); refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "suppliers"), (s) => { const d = s.exists() ? s.data() : null; suppliers = d && Array.isArray(d.list) ? d.list : null; refresh(); }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "sites"), (s) => { const d = s.exists() ? s.data() : null; sites = d && Array.isArray(d.list) ? d.list : []; refresh(); }, () => {}));
-  unsubs.push(onSnapshot(doc(db, "state", "ai"), (s) => { const d = s.exists() ? s.data() : null; cloudAiKey = d && typeof d.key === "string" ? d.key.trim() : ""; }, () => {}));
   unsubs.push(onSnapshot(doc(db, "state", "count"), (s) => { countState = s.exists() ? s.data() : null; refresh(); }, () => {}));
   unsubs.push(onSnapshot(collection(db, "records"),
     (s) => { records = s.docs.map((x) => Object.assign({ id: x.id }, x.data())); refresh(); },
@@ -624,7 +623,7 @@ function renderAdd() {
     '<div class="seg" role="group" aria-label="項目">' +
     '<button class="s" data-type="sales" aria-pressed="' + isS + '">売上</button>' +
     '<button class="e" data-type="expense" aria-pressed="' + !isS + '">経費</button></div>' +
-    (isS && !rec ? '<div class="card" style="margin-bottom:14px;padding:12px 14px"><div class="nm" style="margin-bottom:4px">売れた画面のスクショから自動入力（任意）<span style="font-weight:400;font-size:11px;color:var(--mut,#888)"> 版10/23</span></div>' +
+    (isS && !rec ? '<div class="card" style="margin-bottom:14px;padding:12px 14px"><div class="nm" style="margin-bottom:4px">売れた画面のスクショから自動入力（任意）</div>' +
       '<p class="note" style="margin:0 0 10px">' + (geminiKey() ? 'メルカリの取引画面や、ヤフーフリマの売上履歴（内訳を開いた状態）のスクショを選ぶと、AIが販売サイト・売値・手数料・送料・日付を読み取り、仕入れのときの写真と見比べて商品番号も入れます。' : 'メルカリなどの取引画面のスクリーンショットを選ぶと、金額・日付・発送方法などが自動で入ります。') + '選ばないときは、手で入力します。</p>' +
       '<label class="gbtn" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>画像を選ぶ<input id="f-img" type="file" accept="image/*" hidden></label>' +
       '<div id="f-ocr">' + (state.ocrHtml || "") + '</div></div>' : '') +
@@ -741,7 +740,7 @@ async function doSave() {
   if (it) {
     const rref = doc(collection(db, "records")), batch = writeBatch(db);
     batch.update(doc(db, "items", it.id), { status: "sold", price: amount, soldDate: date, recordId: rref.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm });
-    batch.set(rref, { type: "sales", date: date, amount: amount, memo: String(it.name || memo).slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), itemId: it.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm, orderId: tradeId });
+    batch.set(rref, { type: "sales", date: date, amount: amount, memo: (memo || (it.name + "（" + it.no + "）")).slice(0, 100), by: me.name, uid: me.uid, createdAt: Date.now(), itemId: it.id, site: siteName, fee: fee, shipping: ship, shipMethod: shipm, orderId: tradeId });
     p = batch.commit();
   } else if (wasEdit) {
     const data = { type: state.type, date: date, amount: amount, memo: memo, site: isS ? siteName : "", fee: isS ? fee : 0, shipping: isS ? ship : 0, shipMethod: isS ? shipm : "", category: isS ? "" : category };
@@ -786,8 +785,7 @@ const ICON = {
 
 /* ---------- AI読み取り（Gemini） ---------- */
 const GEMINI_KEY = "bd_gemini_key", GEMINI_MODEL = "gemini-3.8-flash";
-let cloudAiKey = "";
-function geminiKey() { let k = ""; try { k = (localStorage.getItem(GEMINI_KEY) || "").trim(); } catch (e) {} return k || cloudAiKey; }
+function geminiKey() { try { return (localStorage.getItem(GEMINI_KEY) || "").trim(); } catch (e) { return ""; } }
 function sheetAi(msg) {
   openSheet('<h3>AI読み取り（Gemini）</h3>' +
     '<p class="note">仕入れ登録で出品画面のスクショを選ぶと、AIが商品名と商品写真を読み取って自動で入れます。使うにはGoogleのAPIキーが要ります（Google AI Studioで無料で発行できます）。キーはこのスマホの中だけに保存されます。</p>' +
@@ -799,15 +797,14 @@ function sheetAi(msg) {
     (geminiKey() ? '<button class="gbtn" data-s="ai-test" style="width:100%;margin-top:10px">つながるか確かめる</button><button class="ghost n" data-s="ai-clear">キーを消す</button>' : '') +
     '<button class="ghost" data-s="menu">戻る</button>', "ai");
 }
-async function geminiCallOnce(parts, timeoutMs, model) {
-  model = model || GEMINI_MODEL;
+async function geminiCall(parts, timeoutMs) {
   const key = geminiKey();
   if (!key) throw new Error("nokey");
   const body = JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
   // 通常のGeminiキー（AIza…）と、新形式のキー（AQ.…）で、つなぎ先が違うことがあるので、順に試す
   const eps = [
-    ["gl", "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"],
-    ["vx", "https://aiplatform.googleapis.com/v1/publishers/google/models/" + model + ":generateContent"]
+    ["gl", "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"],
+    ["vx", "https://aiplatform.googleapis.com/v1/publishers/google/models/" + GEMINI_MODEL + ":generateContent"]
   ];
   let saved = ""; try { saved = localStorage.getItem("bd_gemini_ep") || ""; } catch (e) {}
   eps.sort((x, y) => (y[0] === saved) - (x[0] === saved));
@@ -837,41 +834,6 @@ async function geminiCallOnce(parts, timeoutMs, model) {
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
   return (txt || []).map((p) => p.text || "").join("");
 }
-// 使えるほかのAIモデル（混み合っているとき用）を、キーで調べて1日覚えておく
-async function altModels() {
-  try {
-    const c = JSON.parse(localStorage.getItem("bd_gemini_alt") || "null");
-    if (c && c.t && Date.now() - c.t < 864e5 && Array.isArray(c.l)) return c.l;
-  } catch (e) {}
-  let l = [];
-  try {
-    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": geminiKey() } });
-    const j = await r.json();
-    l = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).indexOf("generateContent") >= 0)
-      .map((m) => String(m.name || "").replace(/^models\//, ""))
-      .filter((n) => /flash/.test(n) && !/image|tts|audio|live|embedding|robotics|computer|learnlm|gemma|thinking|exp/.test(n) && n !== GEMINI_MODEL)
-      .sort((x, y) => (/lite/.test(x) ? 1 : 0) - (/lite/.test(y) ? 1 : 0) || (y > x ? 1 : -1)).slice(0, 3);
-  } catch (e) {}
-  try { localStorage.setItem("bd_gemini_alt", JSON.stringify({ t: Date.now(), l: l })); } catch (e) {}
-  return l;
-}
-// 混み合って断られた（503/500）ときは、ほかのAIモデルに切り替えて試す。それでもだめなら、retries の回数ぶん待ってやり直す
-async function geminiCall(parts, timeoutMs, retries) {
-  const isBusy = (e) => /（(500|502|503|504)）|high demand|overloaded/.test(String((e && e.message) || ""));
-  let first;
-  try { return await geminiCallOnce(parts, timeoutMs); } catch (e) { if (!isBusy(e)) throw e; first = e; }
-  let alts = [];
-  try { alts = await altModels(); } catch (x) {}
-  for (let i = 0; i < alts.length; i++) {
-    try { return await geminiCallOnce(parts, timeoutMs, alts[i]); } catch (e) { if (!isBusy(e) && !/（404）/.test(String(e && e.message))) throw e; }
-  }
-  const waits = [2000, 4000], max = Math.min(retries || 0, waits.length);
-  for (let n = 0; n < max; n++) {
-    await new Promise((r) => setTimeout(r, waits[n]));
-    try { return await geminiCallOnce(parts, timeoutMs); } catch (e) { if (!isBusy(e)) throw e; first = e; }
-  }
-  throw first;
-}
 function parseJsonLoose(s) {
   const t = String(s || "").replace(/```json|```/g, "").trim();
   try { return JSON.parse(t); } catch (e) {}
@@ -888,7 +850,7 @@ async function aiReadListing(file) {
     "次のJSONだけを返してください。説明文は不要です。\n" +
     '{"name": "商品名（画面に書かれている商品タイトルを、そのまま1行で。SOLDや売れた等の表示、ボタンの文字、説明文は含めない。見つからなければ空文字）",' +
     ' "box": [ymin, xmin, ymax, xmax]（商品の写真が一番大きく写っている長方形の位置。画像の縦横をそれぞれ0〜1000で表した整数。商品写真が無ければ null）}';
-  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }], 25000);
+  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
   const j = parseJsonLoose(txt) || {};
   const name = String(j.name || "").replace(/\s+/g, " ").trim().slice(0, 60);
   return { name: name, img: cropBox(r.img, j.box) || r.img };
@@ -918,46 +880,13 @@ function siteFromAi(label) {
   return names.filter((n) => n.toLowerCase() === L)[0] || String(label);
 }
 // 売上（取引画面・売上履歴）のスクショ → parseTrade と同じ形 + 商品写真
-function stockForAi() {
-  const l = stockItems().slice(0, 150).map((i) => i.no + "：" + String(i.name || "").slice(0, 40));
-  return l.length ? l.join("\n") : "（在庫なし）";
-}
-function cleanTitle(x) {
-  let t = String(x || "").replace(/\s+/g, " ").trim();
-  t = t.replace(/[^\p{L}\p{N}\p{M}\s・ー＆&()（）【】\[\]\-\/.,、。!！?？+＋~〜%％'’"”“]/gu, "").replace(/\s+/g, " ").trim();
-  t = t.replace(/^(商品名|タイトル)\s*[:：]?\s*/, "").replace(/(送料込み|送料無料|匿名配送|取引完了|売り切れ|SOLD|sold)\s*$/g, "").trim();
-  return t.slice(0, 60);
-}
-// 売れた商品の写真と、名前で絞った数件の在庫写真をAIに見せて「同じ物はどれか」を選ばせる（名前だけで決まらないときだけ使う）
-async function aiPickByPhoto(queryCanvas, title, list) {
-  list = (list || []).filter((i) => i && i.thumb).slice(0, 5);
-  if (!list.length || !queryCanvas) return null;
-  const parts = [{ text: "1枚目は「売れた商品」の写真です。切り取り方や写っている範囲は、在庫の写真と違うことがあります。続く写真は在庫の商品の候補で、写真の前に商品番号と商品名が書いてあります。写っている物そのもの（形・色・柄・模様・素材）が同じ在庫を1つ選んでください。似ているだけの別の物は選ばないでください。同じ物が無ければ no は null。売れた商品の名前は「" + (title || "不明") + "」です。JSONだけを返してください：{\"no\": \"商品番号またはnull\"}" },
-    { text: "【売れた商品】" }, { inlineData: { mimeType: "image/jpeg", data: queryCanvas.toDataURL("image/jpeg", 0.8).split(",")[1] } }];
-  list.forEach((i) => {
-    const m = /^data:([^;]+);base64,(.*)$/.exec(i.thumb || "");
-    if (!m) return;
-    parts.push({ text: "【在庫 商品番号" + i.no + "：" + String(i.name || "").slice(0, 40) + "】" });
-    parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
-  });
-  const j = parseJsonLoose(await geminiCall(parts, 40000)) || {};
-  const no = j.no == null ? "" : String(j.no).trim();
-  return list.filter((i) => String(i.no) === no)[0] || null;
-}
-// 商品名だけで1つに決まるか
-function nameDecides(title) {
-  const tc = computeCands(title);
-  if (tc.length && tc[0].sc >= 0.9 && (tc.length === 1 || tc[1].sc < 0.9)) return tc[0].it;
-  if (tc.length && tc[0].sc >= 0.5 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) return tc[0].it;
-  return null;
-}
 async function aiReadSale(file) {
   const r = await fileToImage(file);
   const c = scaledCanvas(r.img, 1024);
   const b64 = c.toDataURL("image/jpeg", 0.85).split(",")[1];
   const prompt = "これはフリマアプリで「売れた商品」の情報が写っているスクリーンショットです。次のJSONだけを返してください。説明文は不要です。\n" +
     '{"site": "メルカリ" または "ヤフーフリマ" または "ラクマ" または "不明",' +
-    ' "name": "商品名（商品タイトルの文字だけ）",' +
+    ' "name": "商品名（商品タイトルをそのまま1行で）",' +
     ' "price": 販売価格・商品代金（円・整数。無ければnull）,' +
     ' "fee": 販売手数料（円・整数・正の数。無ければnull）,' +
     ' "shipping": 送料（円・整数・正の数。「送料込み」などで金額が無ければnull）,' +
@@ -970,27 +899,17 @@ async function aiReadSale(file) {
     "・「メルカリ便」「らくらくメルカリ便」「ゆうゆうメルカリ便」「取引画面」などがあればメルカリ。「売上金管理」「PayPay」「ヤフー」「Yahoo」などがあればヤフーフリマ。\n" +
     "・メルカリの取引画面では、商品代金=price、販売手数料=fee、販売利益=profit、購入日時=date、商品ID=orderId。送料込みで金額が無ければ shipping は null。\n" +
     "・ヤフーフリマの売上履歴は、複数の商品が並び上部に合計も出ます。対象は「開いて、販売価格・販売手数料・送料の内訳が見えている商品」だけです。その商品の 売上金=profit、販売価格=price、販売手数料=fee（マイナス表記でも正の数に）、送料=shipping、日付=date、商品名=name、その商品の写真=box。上部の合計や他の商品の金額は使わないでください。\n" +
-    "・内訳が開いている商品が無ければ、一番大きく写っている商品を対象にしてください。\n" +
-    "・商品名は、長いと「…」で途中までしか表示されません。見えている部分をそのまま書いてください（補ったり推測したりしない）。\n" +
-    "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
-    "";
-  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }], 30000, 1);
-  let j = parseJsonLoose(txt) || {};
-  if (Array.isArray(j)) j = j[0] || {};
+    "・内訳が開いている商品が無ければ、一番大きく写っている商品を対象にしてください。";
+  const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
+  const j = parseJsonLoose(txt) || {};
   const num = (v) => { if (v === null || v === undefined || v === "") return null; const n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); return isNaN(n) ? null : n; };
-  const t = { price: num(j.price), fee: num(j.fee), ship: num(j.shipping), profit: num(j.profit), method: String(j.method || "").slice(0, 20), shipper: "", date: "", orderId: String(j.orderId || "").trim().slice(0, 30), title: cleanTitle(j.name), aiNo: "", site: siteFromAi(j.site), check: "unverified", notes: [] };
+  const t = { price: num(j.price), fee: num(j.fee), ship: num(j.shipping), profit: num(j.profit), method: String(j.method || "").slice(0, 20), shipper: "", date: "", orderId: String(j.orderId || "").trim().slice(0, 30), title: String(j.name || "").replace(/\s+/g, " ").trim().slice(0, 60), site: siteFromAi(j.site), check: "unverified", notes: [] };
   const dm = /(20\d{2})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(j.date || ""));
   if (dm) t.date = dm[1] + "-" + String(+dm[2]).padStart(2, "0") + "-" + String(+dm[3]).padStart(2, "0");
   if (t.price != null && t.fee != null && t.ship != null && t.profit != null) t.check = t.price - t.fee - t.ship === t.profit ? "ok" : "mismatch";
   else if (t.price != null && t.fee != null && t.ship == null && t.profit != null && t.price - t.fee - t.profit >= 0) { t.ship = t.price - t.fee - t.profit; t.check = "derived"; }
   else if (t.price != null && t.fee == null && t.ship != null && t.profit != null && t.price - t.ship - t.profit >= 0) { t.fee = t.price - t.ship - t.profit; t.check = "derived"; }
   if (t.ship == null && t.price != null && t.fee != null) t.ship = 0;
-  // 内訳が開いている商品を、itemsから確実に拾い直す（別の商品を拾う間違いを防ぐ）
-  const exp = Array.isArray(j.items) ? j.items.filter((x) => x && x.expanded === true || (x && x.expanded === "true")) : [];
-  if (exp.length === 1) {
-    if (exp[0].name) t.title = cleanTitle(exp[0].name);
-    if (Array.isArray(exp[0].box)) j.box = exp[0].box;
-  }
   const crop = cropBox(r.img, j.box);
   return { t: t, text: JSON.stringify(j, null, 1), img: r.img, thumbCanvas: crop ? scaledCanvas(crop, 240) : null };
 }
@@ -1006,12 +925,11 @@ async function handleItemPhoto(i, file) {
     const out = await aiReadListing(file);
     if (!inv.draft || inv.draft.rows[i] !== r) return;
     r.photo = compressImage(out.img);
-    if (out.name) r.srcTitle = String(out.name).slice(0, 100);
     if (out.name && !r.name.trim()) r.name = out.name;
     r.ai = "done"; r.aiMsg = out.name ? "AIが読み取りました。商品名が違っていたら直してください。" : "商品名を読み取れませんでした。手で入れてください。";
   } catch (e) {
     try { r.photo = await compressPhoto(file); } catch (x) {}
-    r.ai = "error"; r.aiMsg = /（(429|500|502|503|504)）|high demand|上限|呼びすぎ/.test(String(e && e.message)) ? "AIが混み合っていて読み取れませんでした。写真は入りました。商品名は手で入れて、そのまま登録できます。" : ((e && e.message && e.message !== "nokey" ? e.message : "AIで読み取れませんでした") + "。写真だけ入れました。商品名は手で入れてください。");
+    r.ai = "error"; r.aiMsg = (e && e.message && e.message !== "nokey" ? e.message : "AIで読み取れませんでした") + "。写真だけ入れました。";
   }
   render(true);
 }
@@ -1535,7 +1453,7 @@ async function saveLot(closeAfter) {
     if (!isLot && isNaN(cost)) { err.textContent = (i + 1) + "行目の仕入れ値を入れてください。"; return; }
     if (isNaN(qty) || qty < 1 || qty > 99) { err.textContent = (i + 1) + "行目の個数は1〜99にしてください。"; return; }
     total += qty;
-    rows.push({ photo: r.photo || null, code: (rowCustom(r) ? String(r.code) : "").normalize("NFKC").trim().slice(0, 30), name: r.name.trim().slice(0, 60), srcTitle: String(r.srcTitle || "").slice(0, 100), cost: cost, qty: qty });
+    rows.push({ photo: r.photo || null, code: (rowCustom(r) ? String(r.code) : "").normalize("NFKC").trim().slice(0, 30), name: r.name.trim().slice(0, 60), cost: cost, qty: qty });
   }
   if (total > 200) { err.textContent = "1回の登録は、合計200点までです。"; return; }
   const addCost = isLot ? 0 : rows.reduce((a, r) => a + r.cost * r.qty, 0);
@@ -2292,10 +2210,6 @@ function bigrams(t) {
   return set;
 }
 function similarity(a, b) {
-  // 売上履歴の商品名は「…」で途中までしか出ない。省略された前半が一致していれば、ほぼ同じ商品とみなす
-  const cut = (x) => String(x || "").replace(/[…\.]{1,3}\s*$/, "").replace(/[\s　]+/g, "").toLowerCase();
-  const ca = cut(a), cb = cut(b);
-  if (ca.length >= 6 && cb.length >= 6 && (cb.indexOf(ca) === 0 || ca.indexOf(cb) === 0)) return 0.95;
   const A = bigrams(a), B = bigrams(b);
   if (!A.size || !B.size) return 0;
   let inter = 0; A.forEach((x) => { if (B.has(x)) inter++; });
@@ -2341,7 +2255,7 @@ function compressImage(img) {
     if (full.length < 400000) break;
   }
   // view は画面で大きく見るためだけのもの（データベースには保存しない）
-  return { full: full, thumb: scaledCanvas(img, 160).toDataURL("image/jpeg", 0.6), view: scaledCanvas(img, 900).toDataURL("image/jpeg", 0.8) };
+  return { full: full, thumb: scaledCanvas(img, 80).toDataURL("image/jpeg", 0.5), view: scaledCanvas(img, 900).toDataURL("image/jpeg", 0.8) };
 }
 async function compressPhoto(file) {
   const r = await fileToImage(file);
@@ -2443,7 +2357,7 @@ function setOcrMsg(html, kind) {
 }
 function computeCands(title) {
   if (!title) return [];
-  return stockItems().map((it) => ({ it: it, sc: Math.max(similarity(title, it.name), it.srcTitle ? similarity(title, it.srcTitle) : 0) })).filter((x) => x.sc >= 0.25).sort((a, b) => b.sc - a.sc).slice(0, 3);
+  return stockItems().map((it) => ({ it: it, sc: similarity(title, it.name) })).filter((x) => x.sc >= 0.25).sort((a, b) => b.sc - a.sc).slice(0, 3);
 }
 const thumbImg = (it) => (it && it.thumb ? '<img class="th tap" data-zi="' + esc(it.id) + '" src="' + esc(it.thumb) + '" alt="写真を大きく見る">' : "");
 function candsHtml(c) {
@@ -2465,17 +2379,12 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
   if (t.orderId) got.push("取引ID");
   const ci = candInfo || { merged: computeCands(t.title), imgTop: null, imgRunner: null };
   let matchedByPhoto = false;
-  const aiHit = t.aiNo && stockItems().filter((i) => String(i.no) === t.aiNo)[0];
-  let hitItem = null;
-  if (aiHit) hitItem = aiHit;
+  if (ci.imgTop && ci.imgTop.dist <= 10 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 6)) { vals["f-no"] = ci.imgTop.it.no; matchedByPhoto = true; }
   else {
     const tc = computeCands(t.title);
-    if (tc.length && tc[0].sc >= 0.9 && (tc.length === 1 || tc[1].sc < 0.9)) hitItem = tc[0].it;
-    else if (tc.length && tc[0].sc >= 0.5 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) hitItem = tc[0].it;
-    else if (ci.imgTop && ci.imgTop.dist <= 8 && (!ci.imgRunner || ci.imgRunner.dist - ci.imgTop.dist >= 6)) { hitItem = ci.imgTop.it; matchedByPhoto = true; }
+    if (tc.length && tc[0].sc >= 0.55 && (tc.length === 1 || tc[0].sc - tc[1].sc >= 0.15)) vals["f-no"] = tc[0].it.no;
   }
-  if (hitItem) { vals["f-no"] = hitItem.no; vals["f-memo"] = hitItem.name; got.push("商品番号"); }
-  else if (t.title) vals["f-memo"] = t.title.slice(0, 100);
+  if (!vals["f-no"] && t.title) vals["f-memo"] = t.title.slice(0, 100);
   state.candsHtml = candsHtml(ci.merged);
   let msg;
   if (!got.length && !ci.merged.length) msg = "読み取れた項目がありません。別の画像にするか、手で入力してください。";
@@ -2486,12 +2395,9 @@ function applyTrade(t, text, candInfo, queryThumbUrl) {
     else if (t.check === "derived") msg += "<br>足りない金額を、計算で補いました。";
     else if (t.check === "mismatch") msg += "<br>金額の計算が合いません。数字を確認してください。";
     if (t.shipper) msg += "<br>送料：" + esc(t.shipper) + "（配送料の金額を、送料に入れています）";
-    if (hitItem && aiHit) msg += "<br>商品番号：商品名で決まらなかったので、写真を見比べて選びました。違う商品なら、下の候補か商品番号を直してください。";
-    else if (hitItem && !matchedByPhoto) msg += "<br>商品番号：商品名が一致する商品を選びました。違う商品なら、下の候補か商品番号を直してください。";
     if (matchedByPhoto) msg += "<br>商品番号：写真を見比べて、いちばん近い商品を自動で選びました。違う商品なら、下の候補か商品番号を直してください。";
   }
   if (t.orderId && records.some((r) => r.orderId === t.orderId)) msg += '<br><span class="ng">この取引（' + esc(t.orderId) + '）は、すでに登録されています。</span>';
-  if (!geminiKey()) msg = '<div class="ng" style="margin-bottom:8px"><b>AIが使われていません。</b>この端末にAIのキーが入っていないため、精度の低い簡易読み取りになっています。右上の設定 → 「AI読み取り（Gemini）」でキーを入れてください。</div>' + msg;
   if (queryThumbUrl) msg += '<div class="qthumb"><img class="tap" data-ztrade="1" src="' + esc(queryThumbUrl) + '" alt="送った画像を見る"><span>商品の写真として、ここを比べました。押すと、送った画像を見られます。</span></div>';
   msg += '<details><summary>読み取った文字を見る</summary><pre>' + esc(text) + '</pre></details>';
   state.ocrHtml = '<div class="ocrmsg ' + ((got.length || ci.merged.length) ? "ok" : "err") + '">' + msg + '</div>';
@@ -2505,7 +2411,6 @@ async function handleTradeImage(file) {
   const stillHere = () => myToken === ocrToken && state.view === "add" && state.type === "sales";
   ocrBusy = true;
   if (geminiKey()) {
-    const t0 = Date.now();
     setOcrMsg("AIが画像を読み取っています…", "busy");
     try {
       const out = await aiReadSale(file);
@@ -2515,33 +2420,13 @@ async function handleTradeImage(file) {
       const qc = out.thumbCanvas || cropTradeThumb(out.img);
       const cands = await matchByPhoto(qc, out.t.title);
       if (!stillHere()) return;
-      if (!nameDecides(out.t.title)) {
-        // 名前で決まらないときだけ、候補の写真をAIに見比べさせる
-        try {
-          const pool = [];
-          const add = (it) => { if (it && it.thumb && !pool.some((p) => p.id === it.id)) pool.push(it); };
-          stockItems().map((it) => ({ it: it, sc: Math.max(similarity(out.t.title, it.name), it.srcTitle ? similarity(out.t.title, it.srcTitle) : 0) })).sort((x, y) => y.sc - x.sc).slice(0, 4).forEach((x) => { if (x.sc >= 0.1) add(x.it); });
-          (cands.merged || []).forEach((x) => add(x.it));
-          if (pool.length) {
-            setOcrMsg("写真を見比べています…", "busy");
-            const pick = await aiPickByPhoto(qc, out.t.title, pool);
-            if (pick) out.t.aiNo = String(pick.no);
-            out.text += "\n【写真の見比べ】候補 " + pool.length + "件 → " + (pick ? "番号 " + pick.no : "該当なし");
-          }
-        } catch (x) { out.text += "\n【写真の見比べ】エラー：" + (x && x.message ? x.message : x); }
-        if (!stillHere()) return;
-      }
-      if (!stillHere()) return;
-      out.text += "\n【時間】" + ((Date.now() - t0) / 1000).toFixed(1) + "秒";
       applyTrade(out.t, out.text, cands, qc.toDataURL("image/jpeg", 0.7));
     } catch (e) {
       if (stillHere()) setOcrMsg((e && e.message ? e.message : "AIで読み取れませんでした") + "。手で入力してください。", "err");
     } finally { if (myToken === ocrToken) ocrBusy = false; }
     return;
   }
-  setOcrMsg('<b>AIのキーが入っていないため、読み取れません。</b>右上の設定 → 「AI読み取り（Gemini）」でキーを入れてください（1回入れれば、すべての端末で使えます）。', "err");
-  ocrBusy = false;
-  return;
+  setOcrMsg("画像を読み取っています…（大きい画像や初回は、少し時間がかかります）", "busy");
   try {
     let r;
     try { r = await fileToImage(file); } catch (e) { if (stillHere()) setOcrMsg("画像を開けませんでした。もう一度選び直してください。", "err"); return; }
@@ -2667,12 +2552,10 @@ sheet.addEventListener("click", async (e) => {
   else if (a === "ai-save") {
     const k = val("ai-key").trim(), er = $("ai-err");
     if (!k) { er.textContent = "APIキーを入れてください。"; return; }
-    try { localStorage.setItem(GEMINI_KEY, k); } catch (x) {}
-    cloudAiKey = k;
-    setDoc(doc(db, "state", "ai"), { key: k }).catch(() => {});
-    sheetAi("保存しました。（他のスマホ・パソコンでも使えるように、一緒に保存しました）");
+    try { localStorage.setItem(GEMINI_KEY, k); } catch (x) { er.textContent = "このブラウザには保存できませんでした。"; return; }
+    sheetAi("保存しました。");
   }
-  else if (a === "ai-clear") { try { localStorage.removeItem(GEMINI_KEY); } catch (x) {} cloudAiKey = ""; setDoc(doc(db, "state", "ai"), { key: "" }).catch(() => {}); sheetAi("キーを消しました。"); }
+  else if (a === "ai-clear") { try { localStorage.removeItem(GEMINI_KEY); } catch (x) {} sheetAi("キーを消しました。"); }
   else if (a === "ai-test") {
     const er = $("ai-err"); er.textContent = ""; b.disabled = true; b.textContent = "確かめています…";
     try { await geminiCall([{ text: '{"ok":true} とだけ返してください' }], 20000); sheetAi("つながりました。使えます。"); }
