@@ -939,9 +939,7 @@ async function aiReadSale(file) {
     ' "date": "売れた日・購入日時（YYYY-MM-DD。無ければ空文字）",' +
     ' "orderId": "商品IDや取引ID（無ければ空文字）",' +
     ' "method": "配送の方法（例：ゆうゆうメルカリ便。無ければ空文字）",' +
-    ' "box": [ymin, xmin, ymax, xmax]（対象商品の写真の位置。画像の縦横を0〜1000で表した整数。無ければnull）,' +
-    ' "items": [画面に見える商品を上から順にすべて。各: {"name": "商品名", "expanded": 内訳（販売価格・販売手数料・送料）が開いて見えているならtrue、閉じていればfalse, "box": [ymin, xmin, ymax, xmax]}]}\n' +
-    "まず items に、画面に見える商品を全部書き、内訳が開いている商品に expanded=true を付けてください。その後、expanded=true の商品の情報だけを、上の name・price・fee・shipping・profit・date・box に書いてください。expanded が無い（取引画面など1商品だけ）ときは、その1商品を対象にしてください。\n" +
+    ' "box": [ymin, xmin, ymax, xmax]（対象商品の写真の位置。画像の縦横を0〜1000で表した整数。無ければnull）}\n' +
     "判断のルール：\n" +
     "・「メルカリ便」「らくらくメルカリ便」「ゆうゆうメルカリ便」「取引画面」などがあればメルカリ。「売上金管理」「PayPay」「ヤフー」「Yahoo」などがあればヤフーフリマ。\n" +
     "・メルカリの取引画面では、商品代金=price、販売手数料=fee、販売利益=profit、購入日時=date、商品ID=orderId。送料込みで金額が無ければ shipping は null。\n" +
@@ -951,7 +949,8 @@ async function aiReadSale(file) {
     "・name は商品タイトルの文字だけを書く。「送料込み」「匿名配送」「SOLD」「売り切れ」「取引完了」などの表示、金額、日付、ラベル、絵文字、ボタンの文字は絶対に含めない。タイトルが2行以上に折れていたら、つなげて1行にする。\n" +
     "";
   const txt = await geminiCall([{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: b64 } }]);
-  const j = parseJsonLoose(txt) || {};
+  let j = parseJsonLoose(txt) || {};
+  if (Array.isArray(j)) j = j[0] || {};
   const num = (v) => { if (v === null || v === undefined || v === "") return null; const n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); return isNaN(n) ? null : n; };
   const t = { price: num(j.price), fee: num(j.fee), ship: num(j.shipping), profit: num(j.profit), method: String(j.method || "").slice(0, 20), shipper: "", date: "", orderId: String(j.orderId || "").trim().slice(0, 30), title: cleanTitle(j.name), aiNo: "", site: siteFromAi(j.site), check: "unverified", notes: [] };
   const dm = /(20\d{2})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(j.date || ""));
