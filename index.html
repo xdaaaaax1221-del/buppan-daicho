@@ -797,19 +797,20 @@ function sheetAi(msg) {
     (geminiKey() ? '<button class="gbtn" data-s="ai-test" style="width:100%;margin-top:10px">つながるか確かめる</button><button class="ghost n" data-s="ai-clear">キーを消す</button>' : '') +
     '<button class="ghost" data-s="menu">戻る</button>', "ai");
 }
-async function geminiCall(parts, timeoutMs) {
+async function geminiCallOnce(parts, timeoutMs, model) {
+  model = model || GEMINI_MODEL;
   const key = geminiKey();
   if (!key) throw new Error("nokey");
   const body = JSON.stringify({ contents: [{ role: "user", parts: parts }], generationConfig: { temperature: 0, responseMimeType: "application/json" } });
   // 通常のGeminiキー（AIza…）と、新形式のキー（AQ.…）で、つなぎ先が違うことがあるので、順に試す
   const eps = [
-    ["gl", "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent"],
-    ["vx", "https://aiplatform.googleapis.com/v1/publishers/google/models/" + GEMINI_MODEL + ":generateContent"]
+    ["gl", "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"],
+    ["vx", "https://aiplatform.googleapis.com/v1/publishers/google/models/" + model + ":generateContent"]
   ];
   let saved = ""; try { saved = localStorage.getItem("bd_gemini_ep") || ""; } catch (e) {}
   eps.sort((x, y) => (y[0] === saved) - (x[0] === saved));
   const once = async (u, headers) => {
-    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeoutMs || 40000);
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), timeoutMs || 25000);
     try { return await fetch(u, { method: "POST", headers: headers, signal: ctl.signal, body: body }); }
     finally { clearTimeout(tm); }
   };
@@ -833,6 +834,41 @@ async function geminiCall(parts, timeoutMs) {
   const j = await res.json();
   const txt = (((j.candidates || [])[0] || {}).content || {}).parts;
   return (txt || []).map((p) => p.text || "").join("");
+}
+// 使えるほかのAIモデル（混み合っているとき用）を、キーで調べて1日覚えておく
+async function altModels() {
+  try {
+    const c = JSON.parse(localStorage.getItem("bd_gemini_alt") || "null");
+    if (c && c.t && Date.now() - c.t < 864e5 && Array.isArray(c.l)) return c.l;
+  } catch (e) {}
+  let l = [];
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": geminiKey() } });
+    const j = await r.json();
+    l = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).indexOf("generateContent") >= 0)
+      .map((m) => String(m.name || "").replace(/^models\//, ""))
+      .filter((n) => /flash/.test(n) && !/image|tts|audio|live|embedding|robotics|computer|learnlm|gemma|thinking|exp/.test(n) && n !== GEMINI_MODEL)
+      .sort((x, y) => (/lite/.test(x) ? 1 : 0) - (/lite/.test(y) ? 1 : 0) || (y > x ? 1 : -1)).slice(0, 3);
+  } catch (e) {}
+  try { localStorage.setItem("bd_gemini_alt", JSON.stringify({ t: Date.now(), l: l })); } catch (e) {}
+  return l;
+}
+// 混み合って断られた（503/500）ときは、ほかのAIモデルに切り替えて試す。それでもだめなら、retries の回数ぶん待ってやり直す
+async function geminiCall(parts, timeoutMs, retries) {
+  const isBusy = (e) => /（(0|500|502|503|504)）|high demand|overloaded/.test(String((e && e.message) || ""));
+  let first;
+  try { return await geminiCallOnce(parts, timeoutMs); } catch (e) { if (!isBusy(e)) throw e; first = e; }
+  let alts = [];
+  try { alts = await altModels(); } catch (x) {}
+  for (let i = 0; i < alts.length; i++) {
+    try { return await geminiCallOnce(parts, timeoutMs, alts[i]); } catch (e) { if (!isBusy(e) && !/（404）/.test(String(e && e.message))) throw e; }
+  }
+  const waits = [2000, 4000], max = Math.min(retries || 0, waits.length);
+  for (let n = 0; n < max; n++) {
+    await new Promise((r) => setTimeout(r, waits[n]));
+    try { return await geminiCallOnce(parts, timeoutMs); } catch (e) { if (!isBusy(e)) throw e; first = e; }
+  }
+  throw first;
 }
 function parseJsonLoose(s) {
   const t = String(s || "").replace(/```json|```/g, "").trim();
